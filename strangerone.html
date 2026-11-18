@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stranger Safety Challenge</title>
+    <style>
+        :root {
+            --bg-default: #70a1ff;
+            --card-bg: #ffffff;
+            --safe-color: #2ed573;
+            --unsafe-color: #ff4757;
+            --btn-blue: #1e90ff;
+            --text-main: #2f3542;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Fredoka One', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-default);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.15s ease;
+        }
+
+        /* Full Screen Flashes */
+        body.flash-correct {
+            background-color: #00ff66 !important; /* Bright Green Flash */
+        }
+
+        body.flash-wrong {
+            background-color: #ff0033 !important; /* Bright Red Flash */
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 32px;
+            border: 8px solid #2f3542;
+            box-shadow: 0 16px 0px #2f3542;
+            padding: 40px 50px;
+            max-width: 980px;
+            width: 95%;
+            text-align: center;
+            position: relative;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Larger Badges & Buttons */
+        .badge {
+            background-color: #ffda79;
+            color: #2f3542;
+            font-size: 2.2rem;
+            font-weight: 900;
+            padding: 12px 28px;
+            border-radius: 30px;
+            border: 5px solid #2f3542;
+            box-shadow: 0 5px 0 #2f3542;
+        }
+
+        .ctrl-btn {
+            background-color: #a29bfe;
+            color: #2f3542;
+            font-size: 1.8rem;
+            font-weight: 900;
+            padding: 12px 28px;
+            border-radius: 30px;
+            border: 5px solid #2f3542;
+            box-shadow: 0 5px 0 #2f3542;
+            cursor: pointer;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #dfe4ea;
+            border-radius: 20px;
+            border: 5px solid #2f3542;
+            height: 32px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #2ed573;
+            transition: width 0.3s ease;
+        }
+
+        /* Scaled Up Image Box */
+        .image-box {
+            font-size: 8rem;
+            line-height: 1;
+            margin-bottom: 20px;
+            user-select: none;
+        }
+
+        /* Extra Large Scenario Text */
+        .scenario-box {
+            background-color: #f1f2f6;
+            border: 5px solid #2f3542;
+            border-radius: 24px;
+            padding: 30px 30px;
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: var(--text-main);
+            min-height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            line-height: 1.3;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+        }
+
+        /* Extra Large Action Buttons */
+        .btn {
+            flex: 1;
+            padding: 28px 24px;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: white;
+            border: 5px solid #2f3542;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.25;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: none !important;
+        }
+
+        .btn-choice-1 {
+            background-color: #ff6b6b;
+            box-shadow: 0 8px 0 #ee5253;
+        }
+
+        .btn-choice-2 {
+            background-color: #48dbfb;
+            color: #2f3542;
+            box-shadow: 0 8px 0 #0abde3;
+        }
+
+        .btn-next {
+            background-color: var(--btn-blue);
+            box-shadow: 0 8px 0 #0984e3;
+            color: white;
+            width: 100%;
+            margin-top: 25px;
+            display: none;
+            font-size: 2.4rem;
+        }
+
+        .feedback {
+            font-size: 2.4rem;
+            font-weight: 900;
+            min-height: 55px;
+            margin-top: 25px;
+        }
+
+        .stars {
+            font-size: 5rem;
+            margin-bottom: 15px;
+        }
+
+        /* Settings Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border: 6px solid #2f3542;
+            border-radius: 28px;
+            padding: 35px;
+            max-width: 800px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: left;
+            font-size: 1.4rem;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 2.5rem;
+        }
+
+        .setting-item {
+            margin-bottom: 25px;
+        }
+
+        .setting-item label {
+            font-size: 1.6rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .editor-q {
+            border: 3px dashed #cbd5e1;
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            background-color: #f8fafc;
+        }
+
+        .editor-q input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            border: 3px solid #2f3542;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            .scenario-box {
+                font-size: 1.8rem;
+            }
+            .btn {
+                font-size: 1.6rem;
+                padding: 20px 15px;
+            }
+            .badge, .ctrl-btn {
+                font-size: 1.5rem;
+            }
+            .image-box {
+                font-size: 6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div class="top-bar">
+        <button class="ctrl-btn" onclick="openSettings()">⚙️ Settings</button>
+        <div class="badge">⭐ Stars: <span id="stars">0</span></div>
+        <div class="badge" id="question-count">1 / 4</div>
+    </div>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+
+    <!-- Picture Illustration -->
+    <div class="image-box" id="picture">👩‍💼🚗</div>
+
+    <!-- Extra Large Scenario Text -->
+    <div class="scenario-box" id="scenario">
+        Loading...
+    </div>
+
+    <!-- Extra Large Choice Options -->
+    <div class="action-buttons" id="choice-buttons">
+        <button class="btn btn-choice-1" id="opt1" onclick="checkChoice(0)"></button>
+        <button class="btn btn-choice-2" id="opt2" onclick="checkChoice(1)"></button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <button class="btn btn-next" id="next-btn" onclick="nextQuestion()">NEXT QUESTION ➔</button>
+</div>
+
+<!-- Settings Modal Dialog -->
+<div class="modal" id="settings-modal">
+    <div class="modal-content">
+        <h2>⚙️ Game Settings</h2>
+        
+        <div class="setting-item">
+            <label>Cute Music Volume: <span id="vol-txt">0.25</span></label>
+            <input type="range" id="vol-slider" min="0" max="0.5" step="0.05" value="0.25" onchange="updateVolume(this.value)" style="width:100%; height: 25px;">
+        </div>
+
+        <div class="setting-item">
+            <h3>Edit Questions</h3>
+            <div id="questions-editor-list"></div>
+            <button class="ctrl-btn" style="background:#2ed573; color:white; width:100%; margin-top:10px;" onclick="addQuestionEditor()">+ Add New Question</button>
+        </div>
+
+        <button class="ctrl-btn" style="background:#1e90ff; color:white; width:100%; margin-top:15px;" onclick="saveAndCloseSettings()">Save & Restart Game</button>
+    </div>
+</div>
+
+<script>
+    let questions = [
+        { 
+            text: "I’m your mother’s friend, let’s go!", 
+            image: "👩‍💼🚗", 
+            options: [
+                "No! Go away! I’ll call my mother!", 
+                "Okay, let's go!"
+            ],
+            correctIdx: 0
+        },
+        { 
+            text: "Do you need a ride? I know your school. Let’s go!", 
+            image: "🚘🏫", 
+            options: [
+                "Okay, thanks for the ride!", 
+                "No, thank you. I don’t know you."
+            ],
+            correctIdx: 1
+        },
+        { 
+            text: "Hi! I’m your new friend. Where do you live?", 
+            image: "🧑‍🤝‍🧑🏡", 
+            options: [
+                "Sorry, I won’t say. I don’t know you.", 
+                "I live near the school!"
+            ],
+            correctIdx: 0
+        },
+        { 
+            text: "Hi! Is your mom or dad home? Open the door.", 
+            image: "🚪🔑", 
+            options: [
+                "Sure, come inside!", 
+                "No, I will call the police."
+            ],
+            correctIdx: 1
+        }
+    ];
+
+    let currentQuestion = 0;
+    let stars = 0;
+    let musicPlaying = true;
+    let musicTimer = null;
+    let musicVolume = 0.25;
+
+    // Web Audio API
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Cute & Playful Music Sequence (Higher pitches, Sine wave for soft chime feel)
+    const cuteNotes = [523.25, 659.25, 783.99, 1046.50, 880.00, 659.25, 783.99, 523.25]; // C5, E5, G5, C6, A5, E5, G5, C5
+    let noteIdx = 0;
+
+    function playCuteMusicStep() {
+        if (!musicPlaying || musicVolume === 0) return;
+
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.type = 'sine'; // Soft, cute chime voice
+        osc.frequency.setValueAtTime(cuteNotes[noteIdx], audioCtx.currentTime);
+        
+        // Gentle staccato bounce effect
+        gain.gain.setValueAtTime(musicVolume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.18);
+
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.18);
+
+        noteIdx = (noteIdx + 1) % cuteNotes.length;
+        musicTimer = setTimeout(playCuteMusicStep, 220); // Playful tempo
+    }
+
+    function updateVolume(val) {
+        musicVolume = parseFloat(val);
+        document.getElementById('vol-txt').innerText = val;
+    }
+
+    function playSoundEffect(type) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); 
+            osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); 
+            osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.24); 
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.45);
+        } else {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(140, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    function renderQuestion() {
+        if (questions.length === 0) return;
+        const q = questions[currentQuestion];
+        document.getElementById('picture').innerText = q.image;
+        document.getElementById('scenario').innerText = `"${q.text}"`;
+        document.getElementById('opt1').innerText = q.options[0];
+        document.getElementById('opt2').innerText = q.options[1];
+        document.getElementById('question-count').innerText = `${currentQuestion + 1} / ${questions.length}`;
+        document.getElementById('feedback').innerText = '';
+        document.getElementById('choice-buttons').style.display = 'flex';
+        document.getElementById('next-btn').style.display = 'none';
+        
+        const progressPercent = (currentQuestion / questions.length) * 100;
+        document.getElementById('progress').style.width = `${progressPercent}%`;
+    }
+
+    function checkChoice(selectedIdx) {
+        const q = questions[currentQuestion];
+        const feedbackEl = document.getElementById('feedback');
+
+        if (selectedIdx === q.correctIdx) {
+            stars += 1;
+            document.getElementById('stars').innerText = stars;
+            feedbackEl.innerText = "Great choice! That is very safe!";
+            feedbackEl.style.color = "#2ed573";
+            
+            playSoundEffect('correct');
+            flashScreen('flash-correct');
+        } else {
+            feedbackEl.innerText = "Careful! Never go with or answer a stranger!";
+            feedbackEl.style.color = "#ff4757";
+            
+            playSoundEffect('wrong');
+            flashScreen('flash-wrong');
+        }
+
+        document.getElementById('choice-buttons').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function flashScreen(className) {
+        document.body.classList.add(className);
+        setTimeout(() => {
+            document.body.classList.remove(className);
+        }, 350);
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+            renderQuestion();
+        } else {
+            showEndGame();
+        }
+    }
+
+    function showEndGame() {
+        document.getElementById('progress').style.width = `100%`;
+        document.getElementById('picture').innerText = "🏆";
+        document.getElementById('scenario').innerHTML = `
+            <div>
+                <div class="stars">⭐⭐⭐⭐</div>
+                You completed all questions!<br>
+                Total Stars: <strong>${stars} / ${questions.length}</strong>
+            </div>
+        `;
+        document.getElementById('choice-buttons').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('feedback').innerText = "You are a Stranger Safety Hero!";
+        document.getElementById('feedback').style.color = "#ffa502";
+    }
+
+    /* Settings Editor Functions */
+    function openSettings() {
+        const list = document.getElementById('questions-editor-list');
+        list.innerHTML = '';
+        
+        questions.forEach((q, idx) => {
+            const div = document.createElement('div');
+            div.className = 'editor-q';
+            div.innerHTML = `
+                <strong>Question ${idx + 1}</strong>
+                <input type="text" id="ed-text-${idx}" value="${q.text}" placeholder="Scenario Text">
+                <input type="text" id="ed-img-${idx}" value="${q.image}" placeholder="Emoji Picture">
+                <input type="text" id="ed-opt0-${idx}" value="${q.options[0]}" placeholder="Option 1">
+                <input type="text" id="ed-opt1-${idx}" value="${q.options[1]}" placeholder="Option 2">
+                <label>Correct Choice Index (0 for Option 1, 1 for Option 2):
+                    <input type="number" id="ed-correct-${idx}" min="0" max="1" value="${q.correctIdx}">
+                </label>
+            `;
+            list.appendChild(div);
+        });
+
+        document.getElementById('settings-modal').style.display = 'flex';
+    }
+
+    function addQuestionEditor() {
+        questions.push({
+            text: "New Scenario Example",
+            image: "❓",
+            options: ["Wrong Response", "Safe Response"],
+            correctIdx: 1
+        });
+        openSettings();
+    }
+
+    function saveAndCloseSettings() {
+        questions.forEach((q, idx) => {
+            const textEl = document.getElementById(`ed-text-${idx}`);
+            if (textEl) {
+                q.text = textEl.value;
+                q.image = document.getElementById(`ed-img-${idx}`).value;
+                q.options[0] = document.getElementById(`ed-opt0-${idx}`).value;
+                q.options[1] = document.getElementById(`ed-opt1-${idx}`).value;
+                q.correctIdx = parseInt(document.getElementById(`ed-correct-${idx}`).value) || 0;
+            }
+        });
+
+        document.getElementById('settings-modal').style.display = 'none';
+        
+        // Reset and restart game
+        currentQuestion = 0;
+        stars = 0;
+        document.getElementById('stars').innerText = 0;
+        renderQuestion();
+    }
+
+    // Start background music on user click
+    window.addEventListener('click', () => {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }, { once: true });
+
+    renderQuestion();
+    playCuteMusicStep();
+</script>
+
+</body>
+</html>

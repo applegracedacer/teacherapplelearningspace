@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>It's Okay to Be Different! - Team Battle</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Gothic+A1:wght@600;800;900&family=League+Gothic&display=swap');
+    
+    body {
+      font-family: 'Gothic A1', 'Century Gothic', 'Trade Gothic', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .font-league {
+      font-family: 'League Gothic', 'Gothic A1', sans-serif;
+      letter-spacing: 0.03em;
+    }
+
+    .border-black-8 {
+      border: 8px solid #000000;
+    }
+
+    .border-black-6 {
+      border: 6px solid #000000;
+    }
+
+    .border-black-4 {
+      border: 4px solid #000000;
+    }
+
+    .shadow-pop {
+      box-shadow: 6px 6px 0px #000000;
+    }
+
+    .shadow-pop-lg {
+      box-shadow: 10px 10px 0px #000000;
+    }
+
+    /* FULL-PANEL FLASH ANIMATIONS FOR CORRECT (GREEN) & WRONG (RED) */
+    .flash-correct {
+      animation: flashGreen 0.6s ease-in-out;
+    }
+
+    .flash-wrong {
+      animation: flashRed 0.6s ease-in-out;
+    }
+
+    @keyframes flashGreen {
+      0% { background-color: #00E676 !important; transform: scale(1.02); }
+      50% { background-color: #00E676 !important; transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes flashRed {
+      0% { background-color: #FF1744 !important; transform: scale(0.98); }
+      50% { background-color: #FF1744 !important; transform: scale(0.98); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="bg-yellow-300 min-h-screen flex flex-col justify-between overflow-hidden p-2 md:p-4">
+
+  <!-- Top Navigation / Header -->
+  <header class="bg-white border-black-6 shadow-pop rounded-2xl p-2 md:p-3 mb-2 flex justify-between items-center z-20">
+    <!-- Music & Sound Controls -->
+    <div class="flex items-center gap-2">
+      <button id="musicToggle" class="bg-purple-500 hover:bg-purple-600 text-white border-black-4 shadow-pop text-lg md:text-xl px-4 py-1.5 rounded-xl transition active:translate-y-1 font-bold">
+        🎵 Music: ON
+      </button>
+      <button id="ttsToggle" class="bg-blue-500 hover:bg-blue-600 text-white border-black-4 shadow-pop text-lg md:text-xl px-4 py-1.5 rounded-xl transition active:translate-y-1 font-bold">
+        🗣️ Speech: ON
+      </button>
+    </div>
+
+    <!-- Center Timer -->
+    <div class="bg-yellow-400 border-black-4 shadow-pop px-5 py-1 rounded-2xl text-center">
+      <div class="text-xs font-black text-black tracking-wider">TIME LEFT</div>
+      <div id="gameTimer" class="text-2xl md:text-4xl text-black font-black tracking-widest font-league">10:00</div>
+    </div>
+
+    <!-- Restart Game Button -->
+    <button id="resetBtn" class="bg-red-500 hover:bg-red-600 text-white border-black-4 shadow-pop text-lg md:text-xl px-4 py-1.5 rounded-xl transition active:translate-y-1 font-bold">
+      🔄 Restart
+    </button>
+  </header>
+
+  <!-- COVER / START SCREEN -->
+  <div id="coverScreen" class="fixed inset-0 bg-yellow-300 z-50 flex flex-col items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-white border-black-8 shadow-pop-lg rounded-3xl p-8 md:p-12 text-center flex flex-col items-center">
+      <h1 class="text-5xl md:text-8xl text-black font-black leading-tight mb-4 font-league tracking-wide">
+        It's Okay to Be Different!
+      </h1>
+      <p class="text-2xl md:text-3xl text-gray-800 font-extrabold mb-8">
+        Simultaneous Team Battle • 10-Minute Timed Challenge
+      </p>
+
+      <div class="grid grid-cols-2 gap-6 w-full mb-8">
+        <div class="bg-red-100 border-black-4 p-4 rounded-2xl text-center shadow-pop">
+          <span class="text-3xl md:text-4xl font-black text-red-600">🔴 Team A</span>
+          <p class="text-lg font-bold text-gray-700 mt-1">Keys: Q, W, A, S or Touch</p>
+        </div>
+        <div class="bg-blue-100 border-black-4 p-4 rounded-2xl text-center shadow-pop">
+          <span class="text-3xl md:text-4xl font-black text-blue-600">🔵 Team B</span>
+          <p class="text-lg font-bold text-gray-700 mt-1">Keys: 1, 2, 4, 5 or Touch</p>
+        </div>
+      </div>
+
+      <button id="startBtn" class="w-full bg-green-400 hover:bg-green-500 text-black border-black-6 shadow-pop-lg text-4xl md:text-6xl py-5 rounded-2xl font-black transition transform hover:scale-105 active:scale-95 font-league tracking-wider">
+        🚀 Start Battle!
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME ARENA: DUAL SPLIT-SCREEN -->
+  <main class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 flex-1 z-10">
+    
+    <!-- TEAM A PANEL (LEFT) -->
+    <div id="teamAPanel" class="bg-red-400 border-black-6 shadow-pop-lg rounded-3xl p-3 md:p-4 flex flex-col justify-between transition-colors duration-200">
+      <!-- Team Header -->
+      <div class="flex justify-between items-center bg-white border-black-4 shadow-pop p-2 md:p-3 rounded-2xl mb-2">
+        <div class="text-2xl md:text-4xl text-red-600 font-black">🔴 Team A</div>
+        <div id="teamAScore" class="text-2xl md:text-4xl text-black font-black bg-yellow-300 border-black-4 px-4 py-0.5 rounded-xl font-league">0 PTS</div>
+      </div>
+
+      <!-- Question Card A -->
+      <div class="bg-white border-black-6 shadow-pop rounded-2xl p-4 flex-1 flex flex-col justify-center items-center text-center my-1">
+        <div id="teamAEmoji" class="text-6xl md:text-8xl mb-2">👓</div>
+        <div id="teamATargetText" class="text-2xl md:text-4xl font-black text-black leading-snug">
+          It's okay to wear big glasses!
+        </div>
+      </div>
+
+      <!-- Choice Buttons A -->
+      <div id="teamAChoices" class="grid grid-cols-2 gap-3 mt-2">
+        <!-- Buttons injected dynamically -->
+      </div>
+    </div>
+
+    <!-- TEAM B PANEL (RIGHT) -->
+    <div id="teamBPanel" class="bg-blue-400 border-black-6 shadow-pop-lg rounded-3xl p-3 md:p-4 flex flex-col justify-between transition-colors duration-200">
+      <!-- Team Header -->
+      <div class="flex justify-between items-center bg-white border-black-4 shadow-pop p-2 md:p-3 rounded-2xl mb-2">
+        <div class="text-2xl md:text-4xl text-blue-600 font-black">🔵 Team B</div>
+        <div id="teamBScore" class="text-2xl md:text-4xl text-black font-black bg-yellow-300 border-black-4 px-4 py-0.5 rounded-xl font-league">0 PTS</div>
+      </div>
+
+      <!-- Question Card B -->
+      <div class="bg-white border-black-6 shadow-pop rounded-2xl p-4 flex-1 flex flex-col justify-center items-center text-center my-1">
+        <div id="teamBEmoji" class="text-6xl md:text-8xl mb-2">🧦</div>
+        <div id="teamBTargetText" class="text-2xl md:text-4xl font-black text-black leading-snug">
+          It's okay to wear mismatched socks!
+        </div>
+      </div>
+
+      <!-- Choice Buttons B -->
+      <div id="teamBChoices" class="grid grid-cols-2 gap-3 mt-2">
+        <!-- Buttons injected dynamically -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- GAME OVER / WINNER MODAL -->
+  <div id="winnerModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-black-8 shadow-pop-lg rounded-3xl p-6 md:p-10 max-w-2xl w-full text-center flex flex-col items-center">
+      <div class="text-6xl md:text-8xl mb-2">🏆</div>
+      <h2 id="winnerText" class="text-4xl md:text-6xl font-black text-black mb-4 font-league">Team A Wins!</h2>
+      <div class="flex justify-center gap-6 mb-6 text-2xl md:text-3xl font-black">
+        <div class="bg-red-100 border-black-4 p-3 rounded-2xl">🔴 Team A: <span id="finalScoreA">0</span> PTS</div>
+        <div class="bg-blue-100 border-black-4 p-3 rounded-2xl">🔵 Team B: <span id="finalScoreB">0</span> PTS</div>
+      </div>
+      <button id="playAgainBtn" class="bg-green-400 hover:bg-green-500 text-black border-black-6 shadow-pop-lg text-3xl px-8 py-3 rounded-2xl font-black transition transform hover:scale-105 active:scale-95 font-league">
+        Play Again
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* GAME QUESTION BANK (12 REALIAM & VOCABULARY ITEMS) */
+    const questionBank = [
+      { id: 1, text: "big glasses", fullText: "It's okay to wear big glasses!", emoji: "👓", distractors: ["green hair", "big ears", "red nose"] },
+      { id: 2, text: "mismatched socks", fullText: "It's okay to wear mismatched socks!", emoji: "🧦", distractors: ["big shoes", "funny hat", "star glasses"] },
+      { id: 3, text: "green hair", fullText: "It's okay to have green hair!", emoji: "🧑‍🎤", distractors: ["big smile", "cute pet", "purple shirt"] },
+      { id: 4, text: "big ears", fullText: "It's okay to have big ears!", emoji: "🐘", distractors: ["big glasses", "wheelchair", "red nose"] },
+      { id: 5, text: "wheelchair", fullText: "It's okay to use a wheelchair!", emoji: "👩‍🦽", distractors: ["big shoes", "green hair", "mismatched socks"] },
+      { id: 6, text: "funny hat", fullText: "It's okay to wear a funny hat!", emoji: "🎩", distractors: ["star glasses", "cute pet", "big ears"] },
+      { id: 7, text: "big shoes", fullText: "It's okay to wear big shoes!", emoji: "👟", distractors: ["mismatched socks", "purple shirt", "big glasses"] },
+      { id: 8, text: "red nose", fullText: "It's okay to have a red nose!", emoji: "🤡", distractors: ["funny hat", "big smile", "green hair"] },
+      { id: 9, text: "cute pet", fullText: "It's okay to have a cute pet!", emoji: "🐶", distractors: ["wheelchair", "big ears", "star glasses"] },
+      { id: 10, text: "big smile", fullText: "It's okay to have a big smile!", emoji: "😃", distractors: ["red nose", "big shoes", "mismatched socks"] },
+      { id: 11, text: "purple shirt", fullText: "It's okay to wear a purple shirt!", emoji: "👕", distractors: ["funny hat", "green hair", "big glasses"] },
+      { id: 12, text: "star glasses", fullText: "It's okay to wear star glasses!", emoji: "⭐", distractors: ["cute pet", "big ears", "red nose"] }
+    ];
+
+    /* GAME STATE VARIABLES */
+    let musicEnabled = true;
+    let ttsEnabled = true;
+    let timerInterval = null;
+    let secondsLeft = 600; // 10 Minutes
+    let gameActive = false;
+
+    let teamA = { score: 0, currentQ: null, choices: [] };
+    let teamB = { score: 0, currentQ: null, choices: [] };
+
+    /* WEB AUDIO SYNTHESIZER (CUTE MARIMBA MUSIC & SFX) */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playNote(freq, type = 'sine', duration = 0.15, gainVal = 0.1) {
+      if (!musicEnabled && type === 'music') return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playChime() {
+      // Correct answer chime
+      playNote(523.25, 'triangle', 0.1, 0.2);
+      setTimeout(() => playNote(659.25, 'triangle', 0.1, 0.2), 80);
+      setTimeout(() => playNote(783.99, 'triangle', 0.25, 0.2), 160);
+    }
+
+    function playBuzzer() {
+      // Wrong answer buzzer
+      playNote(150, 'sawtooth', 0.3, 0.25);
+    }
+
+    /* CUTE BACKGROUND MUSIC LOOP */
+    let bgNoteIndex = 0;
+    const bgNotes = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880.00, 698.46];
+    setInterval(() => {
+      if (gameActive && musicEnabled) {
+        playNote(bgNotes[bgNoteIndex], 'sine', 0.12, 0.04);
+        bgNoteIndex = (bgNoteIndex + 1) % bgNotes.length;
+      }
+    }, 250);
+
+    /* SPEECH SYNTHESIS */
+    function speakText(text) {
+      if (!ttsEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.85;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* HELPER: SHUFFLE ARRAY */
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    /* GENERATE QUESTION FOR A TEAM */
+    function nextQuestion(teamKey) {
+      const q = questionBank[Math.floor(Math.random() * questionBank.length)];
+      const choices = shuffle([q.text, ...q.distractors]);
+      
+      if (teamKey === 'A') {
+        teamA.currentQ = q;
+        teamA.choices = choices;
+        renderTeam('A');
+      } else {
+        teamB.currentQ = q;
+        teamB.choices = choices;
+        renderTeam('B');
+      }
+    }
+
+    /* RENDER TEAM CARD & BUTTONS */
+    function renderTeam(teamKey) {
+      const isA = teamKey === 'A';
+      const team = isA ? teamA : teamB;
+      const emojiEl = document.getElementById(isA ? 'teamAEmoji' : 'teamBEmoji');
+      const targetEl = document.getElementById(isA ? 'teamATargetText' : 'teamBTargetText');
+      const choicesContainer = document.getElementById(isA ? 'teamAChoices' : 'teamBChoices');
+      const keys = isA ? ['Q', 'W', 'A', 'S'] : ['1', '2', '4', '5'];
+
+      emojiEl.textContent = team.currentQ.emoji;
+      targetEl.textContent = team.currentQ.fullText;
+
+      choicesContainer.innerHTML = '';
+      team.choices.forEach((choice, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `bg-yellow-300 hover:bg-yellow-400 text-black border-black-4 shadow-pop p-3 md:p-4 rounded-2xl flex items-center justify-start gap-3 transition active:translate-y-1 text-left w-full`;
+        btn.innerHTML = `
+          <span class="bg-black text-white px-2.5 py-1 rounded-xl text-xl md:text-2xl font-black">${keys[idx]}</span>
+          <span class="text-xl md:text-3xl font-bold leading-tight capitalize">${choice}</span>
+        `;
+        btn.onclick = () => handleAnswer(teamKey, choice);
+        choicesContainer.appendChild(btn);
+      });
+    }
+
+    /* HANDLE ANSWER SUBMISSION WITH PANEL FLASHING */
+    function handleAnswer(teamKey, selectedChoice) {
+      if (!gameActive) return;
+
+      const isA = teamKey === 'A';
+      const team = isA ? teamA : teamB;
+      const panel = document.getElementById(isA ? 'teamAPanel' : 'teamBPanel');
+      const scoreEl = document.getElementById(isA ? 'teamAScore' : 'teamBScore');
+
+      const isCorrect = selectedChoice === team.currentQ.text;
+
+      // Remove prior flash classes to allow re-triggering
+      panel.classList.remove('flash-correct', 'flash-wrong');
+      void panel.offsetWidth;
+
+      if (isCorrect) {
+        team.score += 1;
+        scoreEl.textContent = `${team.score} PTS`;
+        playChime();
+        speakText(team.currentQ.fullText);
+        panel.classList.add('flash-correct'); // FLASH GREEN
+      } else {
+        playBuzzer();
+        panel.classList.add('flash-wrong'); // FLASH RED
+      }
+
+      // Proceed immediately to next question independently
+      setTimeout(() => {
+        panel.classList.remove('flash-correct', 'flash-wrong');
+        nextQuestion(teamKey);
+      }, 500);
+    }
+
+    /* KEYBOARD CONTROLS FOR BOTH TEAMS */
+    window.addEventListener('keydown', (e) => {
+      if (!gameActive) return;
+      const k = e.key.toUpperCase();
+
+      // Team A Keys: Q (0), W (1), A (2), S (3)
+      if (['Q', 'W', 'A', 'S'].includes(k)) {
+        const mapA = { 'Q': 0, 'W': 1, 'A': 2, 'S': 3 };
+        const choice = teamA.choices[mapA[k]];
+        if (choice) handleAnswer('A', choice);
+      }
+
+      // Team B Keys: 1 (0), 2 (1), 4 (2), 5 (3)
+      if (['1', '2', '4', '5'].includes(k)) {
+        const mapB = { '1': 0, '2': 1, '4': 2, '5': 3 };
+        const choice = teamB.choices[mapB[k]];
+        if (choice) handleAnswer('B', choice);
+      }
+    });
+
+    /* TIMER MANAGEMENT */
+    function startTimer() {
+      clearInterval(timerInterval);
+      secondsLeft = 600;
+      updateTimerDisplay();
+
+      timerInterval = setInterval(() => {
+        secondsLeft--;
+        updateTimerDisplay();
+
+        if (secondsLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(secondsLeft / 60);
+      const secs = secondsLeft % 60;
+      document.getElementById('gameTimer').textContent = 
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    /* START GAME */
+    function startGame() {
+      document.getElementById('coverScreen').classList.add('hidden');
+      teamA.score = 0;
+      teamB.score = 0;
+      document.getElementById('teamAScore').textContent = '0 PTS';
+      document.getElementById('teamBScore').textContent = '0 PTS';
+
+      gameActive = true;
+      nextQuestion('A');
+      nextQuestion('B');
+      startTimer();
+    }
+
+    /* END GAME */
+    function endGame() {
+      gameActive = false;
+      clearInterval(timerInterval);
+
+      document.getElementById('winnerModal').classList.remove('hidden');
+      document.getElementById('finalScoreA').textContent = teamA.score;
+      document.getElementById('finalScoreB').textContent = teamB.score;
+
+      const winnerText = document.getElementById('winnerText');
+      if (teamA.score > teamB.score) {
+        winnerText.textContent = "Team A Wins!";
+        winnerText.className = "text-4xl md:text-6xl font-black text-red-500 mb-4 font-league";
+      } else if (teamB.score > teamA.score) {
+        winnerText.textContent = "Team B Wins!";
+        winnerText.className = "text-4xl md:text-6xl font-black text-blue-500 mb-4 font-league";
+      } else {
+        winnerText.textContent = "It's a Tie!";
+        winnerText.className = "text-4xl md:text-6xl font-black text-yellow-500 mb-4 font-league";
+      }
+
+      try {
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+      } catch (e) {}
+    }
+
+    /* EVENT LISTENERS */
+    document.getElementById('startBtn').onclick = () => {
+      audioCtx.resume();
+      startGame();
+    };
+
+    document.getElementById('playAgainBtn').onclick = () => {
+      document.getElementById('winnerModal').classList.add('hidden');
+      startGame();
+    };
+
+    document.getElementById('resetBtn').onclick = () => {
+      clearInterval(timerInterval);
+      document.getElementById('coverScreen').classList.remove('hidden');
+      document.getElementById('winnerModal').classList.add('hidden');
+      gameActive = false;
+    };
+
+    document.getElementById('musicToggle').onclick = () => {
+      musicEnabled = !musicEnabled;
+      document.getElementById('musicToggle').textContent = `🎵 Music: ${musicEnabled ? 'ON' : 'OFF'}`;
+    };
+
+    document.getElementById('ttsToggle').onclick = () => {
+      ttsEnabled = !ttsEnabled;
+      document.getElementById('ttsToggle').textContent = `🗣️ Speech: ${ttsEnabled ? 'ON' : 'OFF'}`;
+    };
+  </script>
+</body>
+</html>

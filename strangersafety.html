@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stranger Safety Challenge - Red Eagles vs Blue Sharks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            color: #0f172a;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .heading-font {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .cute-pulse {
+            animation: cutePulse 1.5s infinite ease-in-out;
+        }
+        @keyframes cutePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Red Eagles (Left) Styling */
+        .card-team-red {
+            background: linear-gradient(180deg, #FFFFFF 0%, #FEF2F2 100%);
+            border: 6px solid #EF4444;
+            box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.4);
+        }
+
+        .arcade-btn-red {
+            background-color: #EF4444;
+            border-bottom: 6px solid #B91C1C;
+            transition: all 0.1s ease;
+        }
+        .arcade-btn-red:hover:not(:disabled) {
+            background-color: #DC2626;
+        }
+        .arcade-btn-red:active:not(:disabled) {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+        }
+
+        /* Blue Sharks (Right) Styling */
+        .card-team-blue {
+            background: linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%);
+            border: 6px solid #3B82F6;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+        }
+
+        .arcade-btn-blue {
+            background-color: #3B82F6;
+            border-bottom: 6px solid #1D4ED8;
+            transition: all 0.1s ease;
+        }
+        .arcade-btn-blue:hover:not(:disabled) {
+            background-color: #2563EB;
+        }
+        .arcade-btn-blue:active:not(:disabled) {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+        }
+
+        .arcade-btn-red:disabled, .arcade-btn-blue:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+        }
+
+        /* Animations */
+        @keyframes pulse-grow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+        .pulse-effect {
+            animation: pulse-grow 1.2s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .shake-effect {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-4 flex flex-col justify-between min-h-screen overflow-x-hidden text-slate-900">
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header class="w-full max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-3 rounded-2xl border-2 border-slate-700 shadow-2xl mb-2">
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div class="bg-yellow-400 text-slate-950 px-3 sm:px-4 py-1.5 rounded-xl font-black text-base sm:text-xl heading-font flex items-center gap-2">
+                <i class="fa-solid fa-shield-cat text-red-600"></i>
+                SAFETY RACE!
+            </div>
+            <button id="bgm-toggle-btn" onclick="toggleBGM()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-emerald-800 cute-pulse">
+                <i class="fa-solid fa-music text-yellow-300"></i>
+                <span id="bgm-status">🎵 MUSIC: ON</span>
+            </button>
+            <button id="speech-toggle-btn" onclick="toggleSpeech()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-indigo-800">
+                <i class="fa-solid fa-volume-high text-yellow-300"></i>
+                <span id="speech-status">SPEECH: ON</span>
+            </button>
+        </div>
+
+        <!-- Timer Display & Controls -->
+        <div class="flex items-center gap-2 bg-slate-800 px-3 sm:px-4 py-1.5 rounded-xl border-2 border-yellow-400">
+            <i class="fa-solid fa-clock text-yellow-400 text-lg sm:text-2xl animate-spin"></i>
+            <span id="game-timer" class="text-xl sm:text-3xl heading-font text-yellow-400 tracking-wider">10:00</span>
+            <button onclick="toggleTimerPause()" id="pause-timer-btn" class="bg-yellow-400 text-slate-950 px-2 py-1 rounded-lg text-xs font-black ml-1 hover:bg-yellow-300">
+                <i class="fa-solid fa-pause"></i>
+            </button>
+        </div>
+
+        <!-- SETTINGS BUTTON -->
+        <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border-2 border-yellow-400 px-3 py-1.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105">
+            <i class="fa-solid fa-gear text-lg"></i>
+            <span class="hidden sm:inline">SETTINGS</span>
+        </button>
+    </header>
+
+    <main class="w-full max-w-7xl mx-auto flex-grow grid grid-cols-1 lg:grid-cols-2 gap-4 my-1 relative">
+        
+        <!-- VERTICAL DIVIDER BAR -->
+        <div class="hidden lg:block absolute left-1/2 top-0 bottom-0 w-1 bg-slate-700 -translate-x-1/2 z-10 rounded-full opacity-60"></div>
+
+        <!-- LEFT SIDE: RED EAGLES -->
+        <section class="card-team-red rounded-3xl p-4 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex justify-between items-center bg-red-100 p-3 rounded-2xl border border-red-300">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="bg-red-600 text-white p-2 rounded-xl text-xl sm:text-2xl">
+                        🦅
+                    </div>
+                    <div>
+                        <span class="bg-red-600 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full uppercase">TEAM A (LEFT)</span>
+                        <h2 class="text-xl sm:text-2xl heading-font text-red-600 leading-none mt-0.5">RED EAGLES</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex flex-col items-center bg-white px-2.5 py-1 rounded-xl border border-red-300 text-xs font-bold text-red-600">
+                        <span>STREAK</span>
+                        <span id="streak-red" class="font-black text-sm">🔥 0</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white px-3 sm:px-4 py-1 rounded-xl border-2 border-red-400">
+                        <span class="text-xs font-bold text-gray-500 uppercase">SCORE</span>
+                        <span id="score-red" class="text-2xl sm:text-4xl heading-font text-red-600">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Red Eagles Question Card -->
+            <div class="my-3 text-center bg-white p-4 sm:p-5 rounded-2xl border-2 border-red-100 shadow-sm flex flex-col justify-between flex-grow">
+                <div class="flex justify-between items-center gap-2">
+                    <span id="category-badge-red" class="bg-red-100 text-red-700 font-black text-xs px-3 py-1 rounded-full uppercase truncate">
+                        WHO IS THIS?
+                    </span>
+                    <button onclick="speakQuestion('red')" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 border border-red-200">
+                        <i class="fa-solid fa-volume-high"></i> LISTEN
+                    </button>
+                </div>
+
+                <div class="my-2">
+                    <div id="q-emoji-red" class="text-5xl sm:text-7xl mb-1 hover:scale-110 transition-transform">👮‍♂️</div>
+                    <h3 id="q-text-red" class="text-lg sm:text-2xl heading-font text-slate-800 leading-snug">
+                        Loading Question...
+                    </h3>
+                </div>
+
+                <div id="speech-bubble-red" class="bg-red-50 border border-red-200 text-red-900 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold my-1">
+                    Safe or Unsafe?
+                </div>
+
+                <!-- Red Eagles Answer Options -->
+                <div id="controls-red" class="space-y-2 mt-2">
+                    <!-- Buttons injected by JS -->
+                </div>
+
+                <!-- Red Eagles Status Feedback -->
+                <div id="status-red" class="min-h-[40px] bg-red-50 rounded-xl p-2 mt-2 text-center flex items-center justify-center font-bold text-xs sm:text-sm text-red-600 border border-red-200">
+                    Press button to answer!
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs font-black text-red-700 bg-red-50 p-2 rounded-xl border border-red-200">
+                <span id="question-count-red">QUESTION 1</span>
+                <span>KEYS: <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">A</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">S</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">D</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">F</kbd></span>
+            </div>
+        </section>
+
+        <!-- RIGHT SIDE: BLUE SHARKS -->
+        <section class="card-team-blue rounded-3xl p-4 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex justify-between items-center bg-blue-100 p-3 rounded-2xl border border-blue-300">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="bg-blue-600 text-white p-2 rounded-xl text-xl sm:text-2xl">
+                        🦈
+                    </div>
+                    <div>
+                        <span class="bg-blue-600 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full uppercase">TEAM B (RIGHT)</span>
+                        <h2 class="text-xl sm:text-2xl heading-font text-blue-600 leading-none mt-0.5">BLUE SHARKS</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex flex-col items-center bg-white px-2.5 py-1 rounded-xl border border-blue-300 text-xs font-bold text-blue-600">
+                        <span>STREAK</span>
+                        <span id="streak-blue" class="font-black text-sm">🔥 0</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white px-3 sm:px-4 py-1 rounded-xl border-2 border-blue-400">
+                        <span class="text-xs font-bold text-gray-500 uppercase">SCORE</span>
+                        <span id="score-blue" class="text-2xl sm:text-4xl heading-font text-blue-600">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blue Sharks Question Card -->
+            <div class="my-3 text-center bg-white p-4 sm:p-5 rounded-2xl border-2 border-blue-100 shadow-sm flex flex-col justify-between flex-grow">
+                <div class="flex justify-between items-center gap-2">
+                    <span id="category-badge-blue" class="bg-blue-100 text-blue-700 font-black text-xs px-3 py-1 rounded-full uppercase truncate">
+                        WHO IS THIS?
+                    </span>
+                    <button onclick="speakQuestion('blue')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 border border-blue-200">
+                        <i class="fa-solid fa-volume-high"></i> LISTEN
+                    </button>
+                </div>
+
+                <div class="my-2">
+                    <div id="q-emoji-blue" class="text-5xl sm:text-7xl mb-1 hover:scale-110 transition-transform">👮‍♂️</div>
+                    <h3 id="q-text-blue" class="text-lg sm:text-2xl heading-font text-slate-800 leading-snug">
+                        Loading Question...
+                    </h3>
+                </div>
+
+                <div id="speech-bubble-blue" class="bg-blue-50 border border-blue-200 text-blue-900 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold my-1">
+                    Safe or Unsafe?
+                </div>
+
+                <!-- Blue Sharks Answer Options -->
+                <div id="controls-blue" class="space-y-2 mt-2">
+                    <!-- Buttons injected by JS -->
+                </div>
+
+                <!-- Blue Sharks Status Feedback -->
+                <div id="status-blue" class="min-h-[40px] bg-blue-50 rounded-xl p-2 mt-2 text-center flex items-center justify-center font-bold text-xs sm:text-sm text-blue-600 border border-blue-200">
+                    Press button to answer!
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center text-xs font-black text-blue-700 bg-blue-50 p-2 rounded-xl border border-blue-200">
+                <span id="question-count-blue">QUESTION 1</span>
+                <span>KEYS: <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">J</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">K</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">L</kbd> <kbd class="bg-white px-1.5 py-0.5 rounded shadow border">;</kbd></span>
+            </div>
+        </section>
+    </main>
+
+    <footer class="w-full max-w-7xl mx-auto mt-2">
+        <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-2 text-center text-white flex flex-wrap justify-around items-center text-xs sm:text-sm font-bold gap-2">
+            <span class="text-yellow-400 uppercase tracking-wider"><i class="fa-solid fa-shield-halved mr-1"></i> SAFETY RULES:</span>
+            <span class="bg-red-500/30 text-red-300 px-3 py-1 rounded-lg border border-red-500/50"><i class="fa-solid fa-bullhorn mr-1"></i> 1. SHOUT!</span>
+            <span class="bg-amber-500/30 text-amber-300 px-3 py-1 rounded-lg border border-amber-500/50"><i class="fa-solid fa-person-running mr-1"></i> 2. RUN AWAY!</span>
+            <span class="bg-emerald-500/30 text-emerald-300 px-3 py-1 rounded-lg border border-emerald-500/50"><i class="fa-solid fa-comments mr-1"></i> 3. TELL PARENTS!</span>
+        </div>
+    </footer>
+
+    <div id="game-overlay" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4">
+        
+        <!-- Start Screen Cover -->
+        <div id="start-screen" class="text-center text-white max-w-xl">
+            <div class="flex justify-center items-center gap-4 text-6xl sm:text-7xl mb-2">
+                <span class="animate-bounce">🦅</span>
+                <span class="text-yellow-400 text-3xl font-black">VS</span>
+                <span class="animate-bounce">🦈</span>
+            </div>
+            
+            <h1 class="text-3xl sm:text-5xl heading-font text-yellow-400 tracking-wide uppercase mb-1">
+                STRANGER SAFETY CHALLENGE
+            </h1>
+            <p class="text-xl sm:text-2xl font-bold italic text-yellow-200 mb-2">
+                by Teacher Apple
+            </p>
+            <p class="text-lg font-black text-emerald-400 uppercase tracking-wider mb-6">
+                Red Eagles vs Blue Sharks
+            </p>
+
+            <div class="bg-slate-800 p-4 rounded-2xl text-left border border-slate-700 mb-6 space-y-2 text-xs sm:text-sm">
+                <p class="text-yellow-300 font-bold"><i class="fa-solid fa-bolt mr-2"></i><strong>INDEPENDENT PROGRESSION:</strong> Answer questions simultaneously on your side!</p>
+                <p class="text-yellow-300 font-bold"><i class="fa-solid fa-clock mr-2"></i><strong>10-MINUTE RACE:</strong> Highest score wins before timer expires!</p>
+                <div class="grid grid-cols-2 gap-2 mt-3 text-center pt-2 border-t border-slate-700">
+                    <div class="bg-red-900/50 p-2 rounded-xl border border-red-500">
+                        <span class="font-black text-red-400 block">RED EAGLES (LEFT)</span>
+                        <span class="text-xs text-gray-300">Keys: A, S, D, F</span>
+                    </div>
+                    <div class="bg-blue-900/50 p-2 rounded-xl border border-blue-500">
+                        <span class="font-black text-blue-400 block">BLUE SHARKS (RIGHT)</span>
+                        <span class="text-xs text-gray-300">Keys: J, K, L, ;</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="startGame()" class="flex-1 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-950 heading-font text-2xl py-3.5 rounded-2xl shadow-2xl pulse-effect">
+                    START GAME! <i class="fa-solid fa-play ml-2"></i>
+                </button>
+                <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border-2 border-yellow-400 font-bold px-6 py-3.5 rounded-2xl text-base flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gear"></i> SETTINGS
+                </button>
+            </div>
+        </div>
+
+        <!-- Winner Screen -->
+        <div id="end-screen" class="hidden text-center text-white max-w-xl">
+            <div id="winner-icon" class="text-8xl mb-3">🏆</div>
+            <h1 id="winner-title" class="text-4xl sm:text-5xl heading-font text-yellow-400 mb-2">GAME OVER!</h1>
+            <p id="winner-subtitle" class="text-xl font-bold text-gray-200 mb-6">Great job staying safe!</p>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-red-900/80 border-2 border-red-500 p-4 rounded-2xl">
+                    <span class="text-red-300 font-black text-xs block">RED EAGLES (LEFT)</span>
+                    <span id="final-score-red" class="text-4xl sm:text-5xl heading-font text-white">0</span>
+                </div>
+                <div class="bg-blue-900/80 border-2 border-blue-500 p-4 rounded-2xl">
+                    <span class="text-blue-300 font-black text-xs block">BLUE SHARKS (RIGHT)</span>
+                    <span id="final-score-blue" class="text-4xl sm:text-5xl heading-font text-white">0</span>
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 heading-font text-2xl py-4 rounded-2xl shadow-2xl">
+                <i class="fa-solid fa-rotate-right mr-2"></i> PLAY AGAIN
+            </button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 bg-slate-950/90 z-50 hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div class="bg-slate-900 border-2 border-slate-700 w-full max-w-3xl rounded-3xl p-5 sm:p-6 text-white my-auto max-h-[90vh] flex flex-col justify-between shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <div>
+                    <h2 class="text-2xl font-black text-yellow-400 heading-font flex items-center gap-2">
+                        <i class="fa-solid fa-sliders"></i> GAME SETTINGS
+                    </h2>
+                    <p class="text-xs italic text-yellow-200">by Teacher Apple</p>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white text-2xl font-bold">
+                    &times;
+                </button>
+            </div>
+
+            <div class="space-y-4 overflow-y-auto pr-1 flex-grow text-xs sm:text-sm">
+                <!-- Timer Settings -->
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <h3 class="text-base font-black text-yellow-300 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch"></i> TIMER SETTINGS
+                    </h3>
+                    <div class="flex items-center gap-4">
+                        <label for="setting-timer-mins" class="font-bold text-gray-300">Duration (Minutes):</label>
+                        <input id="setting-timer-mins" type="number" min="1" max="30" value="10" class="w-20 bg-slate-950 text-yellow-400 border border-slate-600 rounded-xl px-3 py-1.5 font-bold text-center text-base focus:outline-none focus:border-yellow-400">
+                        <span class="text-xs text-slate-400">(Applies upon game start/reset)</span>
+                    </div>
+                </div>
+
+                <!-- Audio Settings -->
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <h3 class="text-base font-black text-yellow-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high"></i> AUDIO & SPEECH SETTINGS
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label class="block font-bold text-gray-300 mb-1">Music Volume</label>
+                            <input id="setting-bgm-vol" type="range" min="0" max="1" step="0.05" value="0.35" oninput="updateBGMVolume(this.value)" class="w-full accent-yellow-400 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-300 mb-1">Sound Effects Volume</label>
+                            <input id="setting-sfx-vol" type="range" min="0" max="1" step="0.05" value="0.5" oninput="sfxVolume = parseFloat(this.value)" class="w-full accent-yellow-400 cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-700 pt-3">
+                        <div>
+                            <label class="block font-bold text-gray-300 mb-1">Text-to-Speech Speed</label>
+                            <input id="setting-speech-rate" type="range" min="0.5" max="1.5" step="0.1" value="1.0" oninput="speechRate = parseFloat(this.value)" class="w-full accent-indigo-400 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-300 mb-1">Text-to-Speech Pitch</label>
+                            <input id="setting-speech-pitch" type="range" min="0.5" max="1.5" step="0.1" value="1.1" oninput="speechPitch = parseFloat(this.value)" class="w-full accent-indigo-400 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Editor -->
+                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-black text-yellow-300 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square"></i> QUESTION EDITOR (<span id="question-count-badge">0</span>)
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="addNewQuestionPrompt()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-xl text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> ADD
+                            </button>
+                            <button onclick="resetDefaultQuestions()" class="bg-red-600/80 hover:bg-red-600 text-white font-bold px-3 py-1 rounded-xl text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-rotate-left"></i> DEFAULTS
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="questions-editor-list" class="space-y-3 max-h-56 overflow-y-auto pr-1">
+                        <!-- Questions dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="border-t border-slate-700 pt-4 mt-4 flex flex-wrap justify-between gap-3">
+                <button onclick="saveAndRestartGame()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-2xl text-sm flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-arrows-rotate"></i> SAVE & RESTART GAME
+                </button>
+                <button onclick="closeSettingsModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-2.5 rounded-2xl text-sm">
+                    CLOSE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let masterGain = null;
+        let bgmGainNode = null;
+        let bgmEnabled = true;
+        let speechEnabled = true;
+        let speechRate = 1.0;
+        let speechPitch = 1.1;
+        let bgmStep = 0;
+        let bgmInterval = null;
+        let bgmVolume = 0.35;
+        let sfxVolume = 0.5;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+                masterGain.connect(audioCtx.destination);
+
+                bgmGainNode = audioCtx.createGain();
+                bgmGainNode.gain.setValueAtTime(bgmVolume, audioCtx.currentTime);
+                bgmGainNode.connect(masterGain);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleBGM() {
+            initAudio();
+            bgmEnabled = !bgmEnabled;
+            const btnText = document.getElementById('bgm-status');
+            const btn = document.getElementById('bgm-toggle-btn');
+            
+            if (bgmEnabled) {
+                btnText.innerText = "🎵 MUSIC: ON";
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-emerald-800 cute-pulse";
+                startBGM();
+            } else {
+                btnText.innerText = "🔇 MUSIC: OFF";
+                btn.className = "bg-slate-700 text-gray-300 px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-slate-900";
+                stopBGM();
+            }
+        }
+
+        function toggleSpeech() {
+            speechEnabled = !speechEnabled;
+            const btnText = document.getElementById('speech-status');
+            const btn = document.getElementById('speech-toggle-btn');
+            if (speechEnabled) {
+                btnText.innerText = "SPEECH: ON";
+                btn.className = "bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-indigo-800";
+            } else {
+                btnText.innerText = "SPEECH: OFF";
+                btn.className = "bg-slate-700 text-gray-300 px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-4 border-slate-900";
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        }
+
+        function updateBGMVolume(val) {
+            bgmVolume = parseFloat(val);
+            if (document.getElementById('setting-bgm-vol')) {
+                document.getElementById('setting-bgm-vol').value = val;
+            }
+            if (bgmGainNode && audioCtx) {
+                bgmGainNode.gain.setValueAtTime(bgmVolume, audioCtx.currentTime);
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(masterGain);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(659.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.15);
+                    gain.gain.setValueAtTime(0.4 * sfxVolume, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(160, now + 0.15);
+                    gain.gain.setValueAtTime(0.35 * sfxVolume, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'fanfare') {
+                    const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                    freqs.forEach((f, i) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'triangle';
+                        o.connect(g);
+                        g.connect(masterGain);
+                        o.frequency.setValueAtTime(f, now + i * 0.1);
+                        g.gain.setValueAtTime(0.4 * sfxVolume, now + i * 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.35);
+                        o.start(now + i * 0.1);
+                        o.stop(now + i * 0.1 + 0.35);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function startBGM() {
+            if (bgmInterval || !bgmEnabled) return;
+            const bgmNotes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50];
+            const bassNotes = [261.63, 329.63, 392.00, 329.63];
+
+            bgmInterval = setInterval(() => {
+                if (!bgmEnabled || !audioCtx) return;
+                try {
+                    const now = audioCtx.currentTime;
+                    
+                    if (bgmStep % 2 === 0) {
+                        const noteIndex = (bgmStep * 3) % bgmNotes.length;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(bgmNotes[noteIndex], now);
+                        gain.gain.setValueAtTime(0.12, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                        osc.connect(gain);
+                        gain.connect(bgmGainNode);
+                        osc.start(now);
+                        osc.stop(now + 0.2);
+                    }
+
+                    if (bgmStep % 4 === 0) {
+                        const bassOsc = audioCtx.createOscillator();
+                        const bassGain = audioCtx.createGain();
+                        const bassNote = bassNotes[(bgmStep / 4) % bassNotes.length];
+                        bassOsc.type = 'triangle';
+                        bassOsc.frequency.setValueAtTime(bassNote, now);
+                        bassGain.gain.setValueAtTime(0.2, now);
+                        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                        bassOsc.connect(bassGain);
+                        bassGain.connect(bgmGainNode);
+                        bassOsc.start(now);
+                        bassOsc.stop(now + 0.35);
+                    }
+
+                    bgmStep = (bgmStep + 1) % 32;
+                } catch (e) {}
+            }, 200);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        function speakText(text) {
+            if (!speechEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = speechRate;
+            utterance.pitch = speechPitch;
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        const DEFAULT_QUESTIONS = [
+            {
+                category: "TRUSTED ADULT",
+                emoji: "👮‍♂️",
+                question: "A police officer asks if you are lost.",
+                speechPrompt: "A police officer asks if you are lost. Trusted Adult or Stranger?",
+                options: ["Trusted Adult", "Stranger"],
+                correctIndex: 0,
+                explanation: "Police officers keep us safe!"
+            },
+            {
+                category: "TRUSTED ADULT",
+                emoji: "👩‍🏫",
+                question: "Your teacher talks to you at school.",
+                speechPrompt: "Your teacher talks to you at school. Trusted Adult or Stranger?",
+                options: ["Trusted Adult", "Stranger"],
+                correctIndex: 0,
+                explanation: "Teachers help us learn!"
+            },
+            {
+                category: "STRANGER DANGER",
+                emoji: "🍬",
+                question: "A person you never met gives you candy.",
+                speechPrompt: "A stranger gives you candy. Trusted Adult or Stranger?",
+                options: ["Stranger", "Trusted Adult"],
+                correctIndex: 0,
+                explanation: "Never take candy from strangers!"
+            },
+            {
+                category: "TRUSTED ADULT",
+                emoji: "👩‍👧",
+                question: "Your mother picks you up at school.",
+                speechPrompt: "Your mother picks you up at school. Trusted Adult or Stranger?",
+                options: ["Trusted Adult", "Stranger"],
+                correctIndex: 0,
+                explanation: "Parents are trusted adults!"
+            },
+            {
+                category: "ONLINE SAFETY",
+                emoji: "💻",
+                question: "Someone online says: 'Don't tell your parents.'",
+                speechPrompt: "Someone online says don't tell your parents. Safe or Stranger?",
+                options: ["Stranger", "Trusted Adult"],
+                correctIndex: 0,
+                explanation: "Always tell your parents!"
+            },
+            {
+                category: "WHAT DO YOU SAY?",
+                emoji: "🗣️",
+                question: "Stranger: 'I'm your mother's friend, let's go!'",
+                speechPrompt: "A stranger says I am your mother's friend, let's go! What do you say?",
+                options: ["No! Go away!", "Okay, let's go"],
+                correctIndex: 0,
+                explanation: "Say NO and go away!"
+            },
+            {
+                category: "WHAT DO YOU SAY?",
+                emoji: "🚗",
+                question: "Stranger: 'Do you need a ride? Let's go!'",
+                speechPrompt: "A stranger asks if you need a ride. What do you say?",
+                options: ["No, go away!", "Yes, please"],
+                correctIndex: 0,
+                explanation: "Never get in a stranger's car!"
+            },
+            {
+                category: "WHAT DO YOU SAY?",
+                emoji: "🏠",
+                question: "Stranger: 'Hi! Where do you live?'",
+                speechPrompt: "A stranger asks where you live. What do you say?",
+                options: ["Sorry, I won't say.", "I live at my home"],
+                correctIndex: 0,
+                explanation: "Keep private info safe!"
+            },
+            {
+                category: "WHAT DO YOU SAY?",
+                emoji: "🚪",
+                question: "Stranger: 'Open the door!'",
+                speechPrompt: "A stranger tells you to open the door. What do you say?",
+                options: ["No, this is dangerous.", "Okay, opening!"],
+                correctIndex: 0,
+                explanation: "Do not open the door!"
+            },
+            {
+                category: "WHAT DO YOU SAY?",
+                emoji: "📞",
+                question: "Stranger: 'Is your mom home?'",
+                speechPrompt: "A stranger asks if your mom is home. What do you say?",
+                options: ["No, I will call police.", "No, she is away"],
+                correctIndex: 0,
+                explanation: "Call the police if you feel unsafe!"
+            }
+        ];
+
+        let questionsList = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+        let totalSeconds = 600;
+        let gameTimerInterval = null;
+        let timerPaused = false;
+
+        let teamRed = { index: 0, score: 0, streak: 0, shortcuts: ['a', 's', 'd', 'f'] };
+        let teamBlue = { index: 0, score: 0, streak: 0, shortcuts: ['j', 'k', 'l', ';'] };
+
+        function openSettingsModal() {
+            renderQuestionsEditor();
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function renderQuestionsEditor() {
+            const container = document.getElementById('questions-editor-list');
+            document.getElementById('question-count-badge').innerText = questionsList.length;
+            container.innerHTML = '';
+
+            questionsList.forEach((q, idx) => {
+                const item = document.createElement('div');
+                item.className = "bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-2";
+                
+                let optionsHTML = '';
+                q.options.forEach((opt, optIdx) => {
+                    const isCorrect = (optIdx === q.correctIndex);
+                    optionsHTML += `
+                        <div>
+                            <div class="flex items-center justify-between text-[10px] mb-0.5">
+                                <span class="${isCorrect ? 'text-emerald-400 font-bold' : 'text-gray-400'}">OPTION ${optIdx + 1} ${isCorrect ? '(CORRECT)' : ''}</span>
+                                <label class="cursor-pointer text-[10px] text-yellow-300">
+                                    <input type="radio" name="correct-${idx}" ${isCorrect ? 'checked' : ''} onchange="questionsList[${idx}].correctIndex = ${optIdx}; renderQuestionsEditor();"> Mark Correct
+                                </label>
+                            </div>
+                            <input type="text" value="${opt}" onchange="questionsList[${idx}].options[${optIdx}] = this.value" class="w-full bg-slate-950 border ${isCorrect ? 'border-emerald-500 text-emerald-300' : 'border-slate-700 text-gray-200'} rounded px-2 py-1 text-xs">
+                        </div>
+                    `;
+                });
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <input type="text" value="${q.emoji}" onchange="questionsList[${idx}].emoji = this.value" class="w-10 bg-slate-950 text-center border border-slate-700 rounded p-1 text-sm">
+                        <input type="text" value="${q.category}" onchange="questionsList[${idx}].category = this.value" class="w-1/3 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-yellow-400 font-bold">
+                        <input type="text" value="${q.question}" onchange="questionsList[${idx}].question = this.value; questionsList[${idx}].speechPrompt = this.value" class="flex-grow bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white font-bold">
+                        <button onclick="deleteQuestion(${idx})" class="text-red-400 hover:text-red-300 px-1 text-sm">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${optionsHTML}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addNewQuestionPrompt() {
+            questionsList.push({
+                category: "SAFETY RULE",
+                emoji: "❓",
+                question: "New Safety Question",
+                speechPrompt: "New Safety Question",
+                options: ["Safe Option", "Unsafe Option"],
+                correctIndex: 0,
+                explanation: "Always follow safety rules!"
+            });
+            renderQuestionsEditor();
+        }
+
+        function deleteQuestion(idx) {
+            if (questionsList.length <= 1) {
+                alert("You need at least 1 question to play!");
+                return;
+            }
+            questionsList.splice(idx, 1);
+            renderQuestionsEditor();
+        }
+
+        function resetDefaultQuestions() {
+            questionsList = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+            renderQuestionsEditor();
+        }
+
+        function saveAndRestartGame() {
+            const minsInput = parseInt(document.getElementById('setting-timer-mins').value) || 10;
+            totalSeconds = minsInput * 60;
+            closeSettingsModal();
+            startGame();
+        }
+
+        function startGame() {
+            initAudio();
+            startBGM();
+            document.getElementById('game-overlay').classList.add('hidden');
+            document.getElementById('start-screen').classList.add('hidden');
+            
+            teamRed = { index: 0, score: 0, streak: 0, shortcuts: ['a', 's', 'd', 'f'] };
+            teamBlue = { index: 0, score: 0, streak: 0, shortcuts: ['j', 'k', 'l', ';'] };
+
+            const minsInput = parseInt(document.getElementById('setting-timer-mins').value) || 10;
+            totalSeconds = minsInput * 60;
+            timerPaused = false;
+
+            updateScores();
+            startTimer();
+
+            loadTeamQuestion('red');
+            loadTeamQuestion('blue');
+        }
+
+        function restartGame() {
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+            startGame();
+        }
+
+        function startTimer() {
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            gameTimerInterval = setInterval(() => {
+                if (!timerPaused) {
+                    totalSeconds--;
+                    const mins = Math.floor(totalSeconds / 60);
+                    const secs = totalSeconds % 60;
+                    document.getElementById('game-timer').innerText = 
+                        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                    if (totalSeconds <= 0) {
+                        clearInterval(gameTimerInterval);
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function toggleTimerPause() {
+            timerPaused = !timerPaused;
+            const btn = document.getElementById('pause-timer-btn');
+            btn.innerHTML = timerPaused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+        }
+
+        function loadTeamQuestion(teamKey) {
+            const isRed = (teamKey === 'red');
+            const state = isRed ? teamRed : teamBlue;
+
+            if (state.index >= questionsList.length) {
+                state.index = 0;
+            }
+
+            const q = questionsList[state.index];
+
+            document.getElementById(`category-badge-${teamKey}`).innerText = q.category;
+            document.getElementById(`q-emoji-${teamKey}`).innerText = q.emoji;
+            document.getElementById(`q-text-${teamKey}`).innerText = q.question;
+            document.getElementById(`speech-bubble-${teamKey}`).innerText = q.explanation;
+            document.getElementById(`question-count-${teamKey}`).innerText = `QUESTION ${state.index + 1} / ${questionsList.length}`;
+
+            const statusBox = document.getElementById(`status-${teamKey}`);
+            statusBox.className = `min-h-[40px] bg-${isRed ? 'red' : 'blue'}-50 rounded-xl p-2 mt-2 text-center flex items-center justify-center font-bold text-xs sm:text-sm text-${isRed ? 'red' : 'blue'}-600 border border-${isRed ? 'red' : 'blue'}-200`;
+            statusBox.innerHTML = `<span>Press button to answer!</span>`;
+
+            const controlsDiv = document.getElementById(`controls-${teamKey}`);
+            controlsDiv.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.onclick = () => submitTeamAnswer(teamKey, idx);
+                btn.className = `arcade-btn-${teamKey} w-full text-white text-sm sm:text-base font-black py-2.5 rounded-2xl text-left px-4 flex items-center justify-between shadow-md`;
+                btn.innerHTML = `
+                    <span>
+                        <span class="bg-black/20 px-2 py-0.5 rounded text-xs mr-2 uppercase">${state.shortcuts[idx]}</span> 
+                        <span>${opt}</span>
+                    </span>
+                    <i class="fa-solid fa-circle-check"></i>
+                `;
+                controlsDiv.appendChild(btn);
+            });
+
+            speakQuestion(teamKey);
+        }
+
+        function speakQuestion(teamKey) {
+            const state = (teamKey === 'red') ? teamRed : teamBlue;
+            const q = questionsList[state.index];
+            const teamName = (teamKey === 'red') ? 'Red Eagles' : 'Blue Sharks';
+            speakText(`${teamName}: ${q.speechPrompt || q.question}`);
+        }
+
+        function submitTeamAnswer(teamKey, selectedIndex) {
+            const isRed = (teamKey === 'red');
+            const state = isRed ? teamRed : teamBlue;
+            const q = questionsList[state.index];
+
+            const statusBox = document.getElementById(`status-${teamKey}`);
+            const controlsDiv = document.getElementById(`controls-${teamKey}`);
+
+            const buttons = controlsDiv.getElementsByTagName('button');
+            for (let btn of buttons) btn.disabled = true;
+
+            if (selectedIndex === q.correctIndex) {
+                playSound('correct');
+                state.streak++;
+                state.score += (10 + (state.streak > 1 ? 5 : 0));
+                updateScores();
+
+                statusBox.className = "min-h-[40px] bg-emerald-500 text-white rounded-xl p-2 mt-2 text-center flex items-center justify-center font-black text-sm shadow-md animate-bounce";
+                statusBox.innerHTML = `<span><i class="fa-solid fa-circle-check mr-1"></i> CORRECT! +${10 + (state.streak > 1 ? 5 : 0)}</span>`;
+                triggerConfettiBurst();
+
+                setTimeout(() => {
+                    state.index++;
+                    loadTeamQuestion(teamKey);
+                }, 700);
+            } else {
+                playSound('wrong');
+                state.streak = 0;
+                updateScores();
+                statusBox.className = "min-h-[40px] bg-red-500 text-white rounded-xl p-2 mt-2 text-center flex items-center justify-center font-black text-sm shadow-md shake-effect";
+                statusBox.innerHTML = `<span><i class="fa-solid fa-circle-xmark mr-1"></i> UNSAFE! NEXT QUESTION</span>`;
+
+                setTimeout(() => {
+                    state.index++;
+                    loadTeamQuestion(teamKey);
+                }, 900);
+            }
+        }
+
+        function updateScores() {
+            document.getElementById('score-red').innerText = teamRed.score;
+            document.getElementById('score-blue').innerText = teamBlue.score;
+            document.getElementById('streak-red').innerText = `🔥 ${teamRed.streak}`;
+            document.getElementById('streak-blue').innerText = `🔥 ${teamBlue.streak}`;
+        }
+
+        function endGame() {
+            clearInterval(gameTimerInterval);
+            playSound('fanfare');
+            triggerConfettiBurst();
+
+            document.getElementById('game-overlay').classList.remove('hidden');
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+
+            document.getElementById('final-score-red').innerText = teamRed.score;
+            document.getElementById('final-score-blue').innerText = teamBlue.score;
+
+            const title = document.getElementById('winner-title');
+            const subtitle = document.getElementById('winner-subtitle');
+            const icon = document.getElementById('winner-icon');
+
+            if (teamRed.score > teamBlue.score) {
+                title.innerText = "RED EAGLES WIN!";
+                title.className = "text-4xl sm:text-5xl heading-font text-red-500 mb-2";
+                subtitle.innerText = "Red Eagles (Left) are Stranger Safety Champions!";
+                icon.innerText = "🦅";
+                speakText("Red Eagles Win! Red Eagles are Stranger Safety Champions!");
+            } else if (teamBlue.score > teamRed.score) {
+                title.innerText = "BLUE SHARKS WIN!";
+                title.className = "text-4xl sm:text-5xl heading-font text-blue-500 mb-2";
+                subtitle.innerText = "Blue Sharks (Right) are Stranger Safety Champions!";
+                icon.innerText = "🦈";
+                speakText("Blue Sharks Win! Blue Sharks are Stranger Safety Champions!");
+            } else {
+                title.innerText = "IT'S A TIE!";
+                title.className = "text-4xl sm:text-5xl heading-font text-yellow-400 mb-2";
+                subtitle.innerText = "Both Red Eagles and Blue Sharks are Champions!";
+                icon.innerText = "🏆";
+                speakText("It's a tie! Both teams are Stranger Safety Superstars!");
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('game-overlay').classList.contains('hidden') && document.getElementById('settings-modal').classList.contains('hidden')) {
+                const key = e.key.toLowerCase();
+                
+                // Red Eagles (Left): A, S, D, F
+                if (key === 'a') submitTeamAnswer('red', 0);
+                if (key === 's') submitTeamAnswer('red', 1);
+                if (key === 'd') submitTeamAnswer('red', 2);
+                if (key === 'f') submitTeamAnswer('red', 3);
+
+                // Blue Sharks (Right): J, K, L, ;
+                if (key === 'j') submitTeamAnswer('blue', 0);
+                if (key === 'k') submitTeamAnswer('blue', 1);
+                if (key === 'l') submitTeamAnswer('blue', 2);
+                if (key === ';') submitTeamAnswer('blue', 3);
+            }
+        });
+
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function triggerConfettiBurst() {
+            const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: (Math.random() - 0.7) * 16,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    radius: Math.random() * 6 + 4,
+                    gravity: 0.25,
+                    opacity: 1
+                });
+            }
+        }
+
+        function updateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, idx) => {
+                p.vy += p.gravity;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.opacity -= 0.015;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(p.opacity, 0);
+                ctx.fill();
+
+                if (p.opacity <= 0) {
+                    particles.splice(idx, 1);
+                }
+            });
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(updateConfetti);
+        }
+        updateConfetti();
+    </script>
+</body>
+</html>

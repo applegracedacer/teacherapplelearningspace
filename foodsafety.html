@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Food Safety Battle: Team A vs Team B</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;900&family=Overpass:ital,wght@0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Highway Gothic', 'Overpass', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+    }
+
+    .font-game {
+      font-family: 'Fredoka', 'Highway Gothic', 'Overpass', sans-serif;
+    }
+
+    .btn-push {
+      transition: transform 0.06s ease, box-shadow 0.06s ease;
+    }
+    .btn-push:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .cover-bg {
+      background-image: linear-gradient(rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.92)), 
+                        url('https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=1200&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .flash-overlay {
+      animation: flashPulse 0.3s ease-out;
+    }
+
+    @keyframes flashPulse {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-white flex flex-col justify-between h-screen w-screen overflow-hidden">
+
+  <header class="bg-slate-900 border-b-4 border-slate-800 px-3 py-1.5 flex justify-between items-center z-20 shrink-0 h-14">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">🍎</span>
+      <h1 class="text-lg md:text-xl font-black text-yellow-400 tracking-wider font-game uppercase">FOOD SAFETY BATTLE</h1>
+    </div>
+
+    <!-- Global Match Timer Display -->
+    <div class="flex items-center gap-2 bg-slate-950 px-4 py-1 rounded-2xl border-2 border-yellow-500/50 shadow-inner">
+      <span class="text-xs uppercase font-extrabold text-yellow-400 tracking-widest hidden sm:inline">MATCH TIME:</span>
+      <span id="match-timer" class="text-xl md:text-2xl font-black text-emerald-400 font-game">10:00</span>
+    </div>
+
+    <!-- Header Controls -->
+    <div class="flex items-center gap-2">
+      <button id="btn-toggle-speech" onclick="toggleSpeech()" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-xl text-xs font-black uppercase flex items-center gap-1 border border-slate-700">
+        <span id="speech-icon" class="text-base">🔊</span>
+        <span id="speech-text" class="hidden md:inline">SPEECH ON</span>
+      </button>
+
+      <button onclick="openSettingsModal()" class="bg-yellow-500 hover:bg-yellow-400 text-slate-950 px-3 py-1 rounded-xl text-xs font-black uppercase flex items-center gap-1 border border-yellow-600 btn-push shadow">
+        ⚙️ SETTINGS
+      </button>
+
+      <button onclick="confirmRestart()" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-3 py-1 rounded-xl text-xs uppercase btn-push shadow border-b-2 border-rose-900">
+        🔄 RESET
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 grid grid-cols-2 gap-2 p-2 w-full h-[calc(100vh-3.5rem)] bg-slate-950">
+    
+    <!-- TEAM A (LEFT SIDE - BLUE) -->
+    <section id="arena-a" class="bg-slate-900 border-4 border-blue-500 rounded-2xl p-2 md:p-3 flex flex-col justify-between relative shadow-2xl overflow-hidden">
+      
+      <!-- Team Header & Score -->
+      <div class="flex justify-between items-center bg-blue-950/90 px-3 py-1.5 rounded-xl border-2 border-blue-500/60 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🟦</span>
+          <h2 class="text-xl md:text-2xl font-black text-blue-300 font-game tracking-wider">TEAM A</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] uppercase font-extrabold text-blue-200">SCORE</span>
+          <span id="score-a" class="text-2xl md:text-4xl font-black text-white font-game bg-blue-600 px-3 py-0.5 rounded-lg border border-blue-300">0</span>
+        </div>
+      </div>
+
+      <!-- Item Card Display with Repeat Speech Button -->
+      <div class="flex-1 flex flex-col justify-center items-center text-center my-1 relative bg-slate-950/60 rounded-xl border border-slate-800/80 p-2">
+        <div id="emoji-a" class="text-6xl md:text-8xl my-1 filter drop-shadow-xl select-none">🧼</div>
+        
+        <div class="flex items-center justify-center gap-2 max-w-full px-2">
+          <h3 id="target-a" class="text-xl md:text-3xl font-black text-yellow-300 uppercase tracking-wide leading-tight">
+            DIRTY HANDS BEFORE EATING
+          </h3>
+          <!-- SPEECH REPEAT BUTTON FOR TEAM A -->
+          <button onclick="repeatSpeech('A')" title="Repeat Speech" class="btn-push bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-full p-2 text-xl md:text-2xl shrink-0 shadow-lg border-2 border-yellow-200 flex items-center justify-center">
+            📢
+          </button>
+        </div>
+      </div>
+
+      <!-- Choice Buttons Grid (A, B, C, D) -->
+      <div class="grid grid-cols-2 gap-2 shrink-0">
+        <button onclick="submitAnswer('A', 'CLEAN')" class="btn-push bg-teal-600 hover:bg-teal-500 text-white border-b-4 border-teal-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-teal-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">A</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">CLEAN 🧼</span>
+            <span class="text-[9px] md:text-xs text-teal-100 uppercase font-bold">WASH HANDS</span>
+          </div>
+        </button>
+
+        <button onclick="submitAnswer('A', 'SEPARATE')" class="btn-push bg-amber-600 hover:bg-amber-500 text-white border-b-4 border-amber-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-amber-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">B</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">SEPARATE 🥩</span>
+            <span class="text-[9px] md:text-xs text-amber-100 uppercase font-bold">DON'T MIX</span>
+          </div>
+        </button>
+
+        <button onclick="submitAnswer('A', 'COOK')" class="btn-push bg-orange-600 hover:bg-orange-500 text-white border-b-4 border-orange-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-orange-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">C</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">COOK 🍳</span>
+            <span class="text-[9px] md:text-xs text-orange-100 uppercase font-bold">COOK HOT</span>
+          </div>
+        </button>
+
+        <button onclick="submitAnswer('A', 'CHILL')" class="btn-push bg-cyan-600 hover:bg-cyan-500 text-white border-b-4 border-cyan-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-cyan-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">D</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">CHILL ❄️</span>
+            <span class="text-[9px] md:text-xs text-cyan-100 uppercase font-bold">KEEP COLD</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Flash Overlay Team A -->
+      <div id="flash-overlay-a" class="hidden absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-3 bg-slate-950/95 backdrop-blur-sm rounded-xl border-4">
+        <div id="flash-icon-a" class="text-7xl mb-1">✅</div>
+        <div id="flash-status-a" class="text-2xl md:text-3xl font-black font-game mb-1">CORRECT!</div>
+        <div id="flash-imperative-a" class="text-3xl md:text-5xl font-black text-yellow-300 bg-black/70 px-4 py-2 rounded-xl border-2 border-yellow-400 font-game">
+          WASH HANDS!
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAM B (RIGHT SIDE - ORANGE) -->
+    <section id="arena-b" class="bg-slate-900 border-4 border-orange-500 rounded-2xl p-2 md:p-3 flex flex-col justify-between relative shadow-2xl overflow-hidden">
+      
+      <!-- Team Header & Score -->
+      <div class="flex justify-between items-center bg-orange-950/90 px-3 py-1.5 rounded-xl border-2 border-orange-500/60 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🟥</span>
+          <h2 class="text-xl md:text-2xl font-black text-orange-300 font-game tracking-wider">TEAM B</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] uppercase font-extrabold text-orange-200">SCORE</span>
+          <span id="score-b" class="text-2xl md:text-4xl font-black text-white font-game bg-orange-600 px-3 py-0.5 rounded-lg border border-orange-300">0</span>
+        </div>
+      </div>
+
+      <!-- Item Card Display with Repeat Speech Button -->
+      <div class="flex-1 flex flex-col justify-center items-center text-center my-1 relative bg-slate-950/60 rounded-xl border border-slate-800/80 p-2">
+        <div id="emoji-b" class="text-6xl md:text-8xl my-1 filter drop-shadow-xl select-none">🥩</div>
+        
+        <div class="flex items-center justify-center gap-2 max-w-full px-2">
+          <h3 id="target-b" class="text-xl md:text-3xl font-black text-yellow-300 uppercase tracking-wide leading-tight">
+            RAW CHICKEN TOUCHING MEAT
+          </h3>
+          <!-- SPEECH REPEAT BUTTON FOR TEAM B -->
+          <button onclick="repeatSpeech('B')" title="Repeat Speech" class="btn-push bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-full p-2 text-xl md:text-2xl shrink-0 shadow-lg border-2 border-yellow-200 flex items-center justify-center">
+            📢
+          </button>
+        </div>
+      </div>
+
+      <!-- Choice Buttons Grid (A, B, C, D) -->
+      <div class="grid grid-cols-2 gap-2 shrink-0">
+        <button onclick="submitAnswer('B', 'CLEAN')" class="btn-push bg-teal-600 hover:bg-teal-500 text-white border-b-4 border-teal-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-teal-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">A</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">CLEAN 🧼</span>
+            <span class="text-[9px] md:text-xs text-teal-100 uppercase font-bold">WASH HANDS</span>
+          </div>
+        </button>
+
+        <button onclick="submitAnswer('B', 'SEPARATE')" class="btn-push bg-amber-600 hover:bg-amber-500 text-white border-b-4 border-amber-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-amber-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">B</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">SEPARATE 🥩</span>
+            <span class="text-[9px] md:text-xs text-amber-100 uppercase font-bold">DON'T MIX</span>
+          </div>
+        </button>
+
+        <button onclick="submitAnswer('B', 'COOK')" class="btn-push bg-orange-600 hover:bg-orange-500 text-white border-b-4 border-orange-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-orange-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">C</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">COOK 🍳</span>
+            <span class="text-[9px] md:text-xs text-orange-100 uppercase font-bold">COOK HOT</span>
+          </div>
+        </button>
+
+        <button onclick="submitAnswer('B', 'CHILL')" class="btn-push bg-cyan-600 hover:bg-cyan-500 text-white border-b-4 border-cyan-950 rounded-xl p-2 flex items-center justify-start gap-2 shadow-lg">
+          <span class="text-xl md:text-3xl font-black bg-cyan-950/80 text-yellow-300 px-2 py-0.5 rounded-lg">D</span>
+          <div class="text-left leading-none">
+            <span class="block text-base md:text-2xl font-black font-game">CHILL ❄️</span>
+            <span class="text-[9px] md:text-xs text-cyan-100 uppercase font-bold">KEEP COLD</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Flash Overlay Team B -->
+      <div id="flash-overlay-b" class="hidden absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-3 bg-slate-950/95 backdrop-blur-sm rounded-xl border-4">
+        <div id="flash-icon-b" class="text-7xl mb-1">✅</div>
+        <div id="flash-status-b" class="text-2xl md:text-3xl font-black font-game mb-1">CORRECT!</div>
+        <div id="flash-imperative-b" class="text-3xl md:text-5xl font-black text-yellow-300 bg-black/70 px-4 py-2 rounded-xl border-2 border-yellow-400 font-game">
+          SEPARATE FOOD!
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="modal-cover" class="fixed inset-0 z-50 flex flex-col justify-center items-center text-center p-4 cover-bg">
+    <div class="w-full max-w-xl bg-slate-900/90 border-4 border-yellow-400 rounded-3xl p-6 shadow-2xl backdrop-blur-md flex flex-col items-center">
+      <div class="text-5xl md:text-7xl mb-2 animate-bounce">🍎🧼🥩🍳❄️</div>
+      
+      <!-- Main Game Title -->
+      <h1 class="text-3xl md:text-5xl font-black text-yellow-400 tracking-wider font-game drop-shadow-md uppercase mb-1">
+        FOOD SAFETY BATTLE
+      </h1>
+      
+      <!-- Subtitle with Teacher Apple Credit -->
+      <div class="text-lg md:text-2xl italic font-bold text-yellow-200 font-game mb-2 tracking-wide drop-shadow">
+        by Teacher Apple
+      </div>
+
+      <h2 class="text-xl md:text-3xl font-black text-white font-game tracking-wider text-blue-400 mb-6">
+        TEAM A <span class="text-yellow-400">VS</span> TEAM B
+      </h2>
+
+      <!-- Start Game Button -->
+      <button id="btn-start-game" onclick="triggerCountdownSequence()" class="btn-push bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black font-game text-2xl md:text-4xl px-8 py-4 rounded-2xl border-b-6 border-emerald-800 shadow-2xl uppercase tracking-wider w-full mb-3">
+        🚀 START BATTLE!
+      </button>
+
+      <button onclick="openSettingsModal()" class="text-xs text-yellow-300 font-bold hover:underline flex items-center gap-1">
+        ⚙️ Customize Match Time, Sounds & Scenarios
+      </button>
+
+      <!-- 3-2-1 Countdown Banner -->
+      <div id="countdown-banner" class="hidden text-6xl md:text-8xl font-black font-game text-yellow-400 animate-pulse my-2">
+        3
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-settings" class="hidden fixed inset-0 z-50 flex flex-col justify-center items-center p-4 bg-slate-950/90 backdrop-blur-md">
+    <div class="w-full max-w-3xl bg-slate-900 border-4 border-slate-700 rounded-2xl p-4 md:p-6 shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center border-b-2 border-slate-800 pb-3 mb-4">
+        <h2 class="text-2xl font-black font-game text-yellow-400 flex items-center gap-2">
+          ⚙️ GAME SETTINGS & EDITOR
+        </h2>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-1 space-y-6">
+        
+        <!-- Timer & Audio Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">MATCH DURATION (MINUTES)</label>
+            <input id="setting-match-time" type="number" min="1" max="60" value="10" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-yellow-400 font-bold text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">BGM MUSIC VOLUME</label>
+            <input id="setting-bgm-vol" type="range" min="0" max="1" step="0.05" value="0.75" class="w-full accent-yellow-400 cursor-pointer">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">SFX VOLUME</label>
+            <input id="setting-sfx-vol" type="range" min="0" max="1" step="0.05" value="0.85" class="w-full accent-yellow-400 cursor-pointer">
+          </div>
+        </div>
+
+        <!-- Scenario Content Editor -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-base font-bold text-yellow-300 uppercase tracking-wide">📝 EDIT SCENARIOS</h3>
+            <button onclick="addNewScenarioRow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1 rounded-lg">
+              + ADD NEW SCENARIO
+            </button>
+          </div>
+
+          <div id="scenarios-editor-list" class="space-y-2">
+            <!-- Dynamic scenario rows rendered here -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t-2 border-slate-800 pt-3 mt-4 flex justify-end gap-3">
+        <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs">
+          CANCEL
+        </button>
+        <button onclick="saveSettings()" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black px-6 py-2 rounded-xl text-xs uppercase btn-push">
+          SAVE & RESTART
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="modal-victory" class="hidden fixed inset-0 z-50 flex flex-col justify-center items-center text-center p-4 bg-slate-950/95 backdrop-blur-md">
+    <div class="w-full max-w-lg bg-slate-900 border-4 border-yellow-400 rounded-3xl p-6 shadow-2xl">
+      <div class="text-7xl mb-1">🏆</div>
+      <h2 class="text-xl md:text-2xl font-extrabold text-slate-300 font-game mb-1">TIME IS UP!</h2>
+      <h1 id="victory-winner-text" class="text-3xl md:text-5xl font-black font-game text-yellow-400 mb-4 uppercase tracking-wider">
+        TEAM A WINS!
+      </h1>
+
+      <div class="grid grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6">
+        <div class="border-r border-slate-800 pr-2">
+          <span class="block text-sm font-bold text-blue-400 mb-0.5">TEAM A</span>
+          <span id="final-score-a" class="text-4xl md:text-5xl font-black font-game text-white">0</span>
+          <span class="block text-[10px] text-slate-400">POINTS</span>
+        </div>
+        <div class="pl-2">
+          <span class="block text-sm font-bold text-orange-400 mb-0.5">TEAM B</span>
+          <span id="final-score-b" class="text-4xl md:text-5xl font-black font-game text-white">0</span>
+          <span class="block text-[10px] text-slate-400">POINTS</span>
+        </div>
+      </div>
+
+      <button onclick="resetMatchToCover()" class="btn-push bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black font-game text-2xl px-6 py-3 rounded-xl border-b-4 border-yellow-700 w-full uppercase">
+        PLAY AGAIN 🔄
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let SCENARIOS = [
+      { text: "DIRTY HANDS BEFORE EATING", rule: "CLEAN", imperative: "WASH HANDS!", emoji: "🧼" },
+      { text: "RAW CHICKEN TOUCHING MEAT", rule: "SEPARATE", imperative: "SEPARATE FOOD!", emoji: "🥩" },
+      { text: "RAW BURGER NEEDS COOKING", rule: "COOK", imperative: "COOK HOT!", emoji: "🍳" },
+      { text: "MILK LEFT IN THE WARM SUN", rule: "CHILL", imperative: "KEEP COLD!", emoji: "❄️" },
+      { text: "DIRTY APPLES FROM THE TREE", rule: "CLEAN", imperative: "WASH FOOD!", emoji: "🍎" },
+      { text: "RAW FISH ON FRUIT BOARD", rule: "SEPARATE", imperative: "SEPARATE FOOD!", emoji: "🐟" },
+      { text: "COLD SOUP NEEDS HEATING UP", rule: "COOK", imperative: "COOK HOT!", emoji: "🍲" },
+      { text: "MELTED ICE CREAM ON TABLE", rule: "CHILL", imperative: "KEEP COLD!", emoji: "🍦" }
+    ];
+
+    let matchDurationMinutes = 10;
+    let bgmVolume = 0.75;
+    let sfxVolume = 0.85;
+
+    let scoreA = 0;
+    let scoreB = 0;
+    let indexA = 0;
+    let indexB = 0;
+    let deckA = [];
+    let deckB = [];
+    
+    let globalMatchTimeLeft = 600;
+    let globalMatchTimer = null;
+
+    let isSpeechEnabled = true;
+
+    let audioCtx = null;
+    let bgmGainNode = null;
+    let bgmInterval = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function startCuteBgm() {
+      initAudio();
+      if (bgmInterval) clearInterval(bgmInterval);
+
+      bgmGainNode = audioCtx.createGain();
+      bgmGainNode.gain.value = bgmVolume;
+      bgmGainNode.connect(audioCtx.destination);
+
+      // Bright, cheerful synth melody + bouncy bassline
+      const melody = [523.25, 659.25, 783.99, 1046.50, 783.99, 659.25, 880.00, 1046.50];
+      const bass = [261.63, 261.63, 329.63, 329.63, 349.23, 349.23, 392.00, 392.00];
+      let step = 0;
+
+      bgmInterval = setInterval(() => {
+        if (!audioCtx || bgmGainNode.gain.value === 0) return;
+
+        // Lead Melody Chime
+        const oscMel = audioCtx.createOscillator();
+        const gainMel = audioCtx.createGain();
+        oscMel.type = 'triangle';
+        oscMel.frequency.setValueAtTime(melody[step], audioCtx.currentTime);
+        gainMel.gain.setValueAtTime(bgmGainNode.gain.value * 0.45, audioCtx.currentTime);
+        gainMel.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+        oscMel.connect(gainMel);
+        gainMel.connect(bgmGainNode);
+        oscMel.start();
+        oscMel.stop(audioCtx.currentTime + 0.18);
+
+        // Bouncy Bass Synth
+        const oscBass = audioCtx.createOscillator();
+        const gainBass = audioCtx.createGain();
+        oscBass.type = 'sine';
+        oscBass.frequency.setValueAtTime(bass[step], audioCtx.currentTime);
+        gainBass.gain.setValueAtTime(bgmGainNode.gain.value * 0.35, audioCtx.currentTime);
+        gainBass.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        oscBass.connect(gainBass);
+        gainBass.connect(bgmGainNode);
+        oscBass.start();
+        oscBass.stop(audioCtx.currentTime + 0.2);
+
+        step = (step + 1) % melody.length;
+      }, 200);
+    }
+
+    function playSfx(type) {
+      initAudio();
+      if (sfxVolume <= 0) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'correct') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.22);
+        gain.gain.setValueAtTime(sfxVolume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.28);
+        gain.gain.setValueAtTime(sfxVolume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+
+      } else if (type === 'beep') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        gain.gain.setValueAtTime(sfxVolume * 0.6, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+
+      } else if (type === 'go') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(sfxVolume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      }
+    }
+
+    function speakText(text) {
+      if (!isSpeechEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1;
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleSpeech() {
+      isSpeechEnabled = !isSpeechEnabled;
+      document.getElementById('speech-icon').textContent = isSpeechEnabled ? '🔊' : '🔇';
+      document.getElementById('speech-text').textContent = isSpeechEnabled ? 'SPEECH ON' : 'SPEECH OFF';
+      if (!isSpeechEnabled && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function repeatSpeech(team) {
+      const currentDeck = (team === 'A') ? deckA : deckB;
+      const currentIndex = (team === 'A') ? indexA : indexB;
+      if (currentDeck.length > 0) {
+        speakText(currentDeck[currentIndex].text);
+      }
+    }
+
+    function triggerCountdownSequence() {
+      initAudio();
+      document.getElementById('btn-start-game').classList.add('hidden');
+      const banner = document.getElementById('countdown-banner');
+      banner.classList.remove('hidden');
+
+      let count = 3;
+      banner.textContent = count;
+      playSfx('beep');
+
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          banner.textContent = count;
+          playSfx('beep');
+        } else if (count === 0) {
+          banner.textContent = "GO!";
+          playSfx('go');
+        } else {
+          clearInterval(interval);
+          document.getElementById('modal-cover').classList.add('hidden');
+          startMatch();
+        }
+      }, 800);
+    }
+
+    function startMatch() {
+      scoreA = 0;
+      scoreB = 0;
+      globalMatchTimeLeft = matchDurationMinutes * 60;
+
+      document.getElementById('score-a').textContent = "0";
+      document.getElementById('score-b').textContent = "0";
+
+      deckA = [...SCENARIOS].sort(() => Math.random() - 0.5);
+      deckB = [...SCENARIOS].sort(() => Math.random() - 0.5);
+      indexA = 0;
+      indexB = 0;
+
+      startCuteBgm();
+
+      if (globalMatchTimer) clearInterval(globalMatchTimer);
+      globalMatchTimer = setInterval(updateMatchTimer, 1000);
+
+      loadCardA();
+      loadCardB();
+    }
+
+    function updateMatchTimer() {
+      globalMatchTimeLeft--;
+      const mins = Math.floor(globalMatchTimeLeft / 60);
+      const secs = globalMatchTimeLeft % 60;
+      document.getElementById('match-timer').textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+      if (globalMatchTimeLeft <= 0) {
+        endMatch();
+      }
+    }
+
+    function loadCardA() {
+      if (deckA.length === 0) return;
+      const item = deckA[indexA];
+      document.getElementById('emoji-a').textContent = item.emoji;
+      document.getElementById('target-a').textContent = item.text;
+      speakText(item.text);
+    }
+
+    function loadCardB() {
+      if (deckB.length === 0) return;
+      const item = deckB[indexB];
+      document.getElementById('emoji-b').textContent = item.emoji;
+      document.getElementById('target-b').textContent = item.text;
+    }
+
+    function submitAnswer(team, selectedRule) {
+      const isA = (team === 'A');
+      const currentDeck = isA ? deckA : deckB;
+      const currentIndex = isA ? indexA : indexB;
+      const item = currentDeck[currentIndex];
+
+      const overlay = document.getElementById(isA ? 'flash-overlay-a' : 'flash-overlay-b');
+      const icon = document.getElementById(isA ? 'flash-icon-a' : 'flash-icon-b');
+      const status = document.getElementById(isA ? 'flash-status-a' : 'flash-status-b');
+      const imperative = document.getElementById(isA ? 'flash-imperative-a' : 'flash-imperative-b');
+
+      if (selectedRule === item.rule) {
+        if (isA) {
+          scoreA += 1;
+          document.getElementById('score-a').textContent = scoreA;
+        } else {
+          scoreB += 1;
+          document.getElementById('score-b').textContent = scoreB;
+        }
+
+        playSfx('correct');
+        icon.textContent = "✅";
+        status.textContent = "CORRECT! +1 POINT";
+        status.className = "text-2xl md:text-3xl font-black font-game mb-1 text-emerald-400";
+        overlay.style.borderColor = "#10b981";
+        imperative.textContent = item.imperative;
+
+        speakText(`Correct! ${item.imperative}`);
+
+      } else {
+        playSfx('wrong');
+        icon.textContent = "❌";
+        status.textContent = "WRONG!";
+        status.className = "text-2xl md:text-3xl font-black font-game mb-1 text-rose-500";
+        overlay.style.borderColor = "#f43f5e";
+        imperative.textContent = item.imperative;
+
+        speakText(`Wrong! ${item.imperative}`);
+      }
+
+      overlay.classList.remove('hidden', 'flash-overlay');
+      void overlay.offsetWidth;
+      overlay.classList.add('flash-overlay');
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        if (isA) {
+          indexA = (indexA + 1) % deckA.length;
+          loadCardA();
+        } else {
+          indexB = (indexB + 1) % deckB.length;
+          loadCardB();
+        }
+      }, 1200);
+    }
+
+    function openSettingsModal() {
+      document.getElementById('setting-match-time').value = matchDurationMinutes;
+      document.getElementById('setting-bgm-vol').value = bgmVolume;
+      document.getElementById('setting-sfx-vol').value = sfxVolume;
+
+      renderScenarioEditorRows();
+      document.getElementById('modal-settings').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('modal-settings').classList.add('hidden');
+    }
+
+    function renderScenarioEditorRows() {
+      const container = document.getElementById('scenarios-editor-list');
+      container.innerHTML = '';
+
+      SCENARIOS.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-12 gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800 items-center text-xs';
+        row.innerHTML = `
+          <input type="text" value="${item.emoji}" class="col-span-2 md:col-span-1 bg-slate-900 border border-slate-700 rounded p-1 text-center font-bold" onchange="updateScenarioData(${idx}, 'emoji', this.value)">
+          <input type="text" value="${item.text}" class="col-span-10 md:col-span-5 bg-slate-900 border border-slate-700 rounded p-1 font-bold text-yellow-300" onchange="updateScenarioData(${idx}, 'text', this.value)">
+          <select class="col-span-5 md:col-span-2 bg-slate-900 border border-slate-700 rounded p-1 font-bold text-emerald-400" onchange="updateScenarioData(${idx}, 'rule', this.value)">
+            <option value="CLEAN" ${item.rule === 'CLEAN' ? 'selected' : ''}>CLEAN</option>
+            <option value="SEPARATE" ${item.rule === 'SEPARATE' ? 'selected' : ''}>SEPARATE</option>
+            <option value="COOK" ${item.rule === 'COOK' ? 'selected' : ''}>COOK</option>
+            <option value="CHILL" ${item.rule === 'CHILL' ? 'selected' : ''}>CHILL</option>
+          </select>
+          <input type="text" value="${item.imperative}" class="col-span-5 md:col-span-3 bg-slate-900 border border-slate-700 rounded p-1 font-bold text-slate-200" onchange="updateScenarioData(${idx}, 'imperative', this.value)">
+          <button onclick="removeScenarioRow(${idx})" class="col-span-2 md:col-span-1 text-rose-500 hover:text-rose-400 font-black text-center">✕</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function updateScenarioData(index, field, value) {
+      SCENARIOS[index][field] = value.toUpperCase();
+    }
+
+    function addNewScenarioRow() {
+      SCENARIOS.push({
+        text: "NEW FOOD SAFETY HAZARD",
+        rule: "CLEAN",
+        imperative: "WASH HANDS!",
+        emoji: "🧼"
+      });
+      renderScenarioEditorRows();
+    }
+
+    function removeScenarioRow(index) {
+      if (SCENARIOS.length <= 1) {
+        alert("You must keep at least 1 scenario!");
+        return;
+      }
+      SCENARIOS.splice(index, 1);
+      renderScenarioEditorRows();
+    }
+
+    function saveSettings() {
+      matchDurationMinutes = parseInt(document.getElementById('setting-match-time').value) || 10;
+      bgmVolume = parseFloat(document.getElementById('setting-bgm-vol').value);
+      sfxVolume = parseFloat(document.getElementById('setting-sfx-vol').value);
+
+      if (bgmGainNode) {
+        bgmGainNode.gain.value = bgmVolume;
+      }
+
+      closeSettingsModal();
+      startMatch();
+    }
+
+    function endMatch() {
+      if (globalMatchTimer) clearInterval(globalMatchTimer);
+
+      const winnerText = document.getElementById('victory-winner-text');
+      if (scoreA > scoreB) {
+        winnerText.textContent = "TEAM A WINS! 🟦";
+        winnerText.className = "text-3xl md:text-5xl font-black font-game text-blue-400 mb-4 uppercase tracking-wider";
+      } else if (scoreB > scoreA) {
+        winnerText.textContent = "TEAM B WINS! 🟥";
+        winnerText.className = "text-3xl md:text-5xl font-black font-game text-orange-400 mb-4 uppercase tracking-wider";
+      } else {
+        winnerText.textContent = "IT'S A TIE! 🤝";
+        winnerText.className = "text-3xl md:text-5xl font-black font-game text-yellow-400 mb-4 uppercase tracking-wider";
+      }
+
+      document.getElementById('final-score-a').textContent = scoreA;
+      document.getElementById('final-score-b').textContent = scoreB;
+
+      document.getElementById('modal-victory').classList.remove('hidden');
+
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+      }
+
+      speakText(winnerText.textContent);
+    }
+
+    function resetMatchToCover() {
+      document.getElementById('modal-victory').classList.add('hidden');
+      document.getElementById('modal-cover').classList.remove('hidden');
+      document.getElementById('btn-start-game').classList.remove('hidden');
+      document.getElementById('countdown-banner').classList.add('hidden');
+    }
+
+    function confirmRestart() {
+      if (confirm("Restart current battle?")) {
+        startMatch();
+      }
+    }
+  </script>
+</body>
+</html>

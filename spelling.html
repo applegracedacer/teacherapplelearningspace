@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Health Spelling Rush Challenge!</title>
+    <style>
+        :root {
+            --boy-color: #0d47a1; /* Bold Navy Blue */
+            --boy-bg: #1a237e;    /* Deep Navy Background */
+            --girl-color: #ff007f; /* Vibrant Fuchsia Pink */
+            --girl-bg: #d81b60;   /* Deep Fuchsia Background */
+            --accent-color: #FF9800;
+            --light-text: #ffffff;
+            --light-bg-opaque: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', sans-serif;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            height: 100vh;
+            display: flex;
+        }
+
+        .battle-arena {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .team-side {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            position: relative;
+        }
+
+        #boys-side {
+            background-color: var(--boy-bg);
+            border-right: 4px dashed rgba(255,255,255,0.3);
+        }
+
+        #girls-side {
+            background-color: var(--girl-bg);
+            border-left: 4px dashed rgba(255,255,255,0.3);
+        }
+
+        .header {
+            text-align: center;
+            width: 100%;
+        }
+
+        .team-title {
+            font-size: 2.3rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--light-text);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .score-board {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: inline-block;
+        }
+        #boys-side .score-board { color: var(--boy-bg); }
+        #girls-side .score-board { color: var(--girl-bg); }
+
+        .word-clue-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 25px;
+            border-radius: 20px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 90%;
+        }
+        .clue-label {
+            font-size: 0.9rem;
+            color: #555;
+            text-transform: uppercase;
+        }
+        .word-to-spell {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #111;
+            letter-spacing: 1px;
+        }
+
+        .slots-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            min-height: 70px;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .letter-slot {
+            width: 55px;
+            height: 55px;
+            border: 3px dashed rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--light-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        body.boy-selected #boys-side .letter-slot:not(.filled) {
+            border-color: var(--accent-color);
+            background: rgba(255, 152, 0, 0.3);
+            animation: pulse-slot 1s infinite alternate;
+        }
+        body.girl-selected #girls-side .letter-slot:not(.filled) {
+            border-color: var(--accent-color);
+            background: rgba(255, 152, 0, 0.3);
+            animation: pulse-slot 1s infinite alternate;
+        }
+
+        @keyframes pulse-slot {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); box-shadow: 0 0 15px rgba(255,152,0,0.6); }
+        }
+
+        .letter-slot.filled { 
+            border-style: solid; 
+            border-color: white; 
+            color: #111; 
+            background: white; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .letters-pool {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .jiggle-tile {
+            position: absolute;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #111;
+            background: #ffffff;
+            box-shadow: 0 5px 0 #b0bec5, 0 8px 10px rgba(0,0,0,0.3);
+            transition: opacity 0.2s, transform 0.1s, border 0.2s;
+        }
+
+        .jiggle-tile.selected {
+            border: 4px solid #fff;
+            transform: scale(1.15) !important;
+            box-shadow: 0 0 20px #fff !important;
+            background: var(--accent-color) !important;
+            color: white !important;
+        }
+
+        .jiggle-tile.used {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.1) !important;
+            transition: all 0.3s ease;
+        }
+
+        .bomb-centerpiece {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .bomb-body {
+            width: 110px;
+            height: 110px;
+            background: #2b2b2b;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid #444;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .timer-display {
+            color: #ff3333;
+            font-family: 'Courier New', monospace;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255,51,51,0.8);
+            line-height: 1;
+        }
+        .timer-lbl {
+            color: #aaa;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .bomb-body.panic {
+            background: #d32f2f;
+            border-color: #ff6666;
+            animation: panic-shake 0.2s infinite linear;
+            box-shadow: 0 0 35px rgba(255,0,0,0.8);
+        }
+
+        @keyframes panic-shake {
+            0% { transform: translate(2px, 1px); }
+            50% { transform: translate(-2px, -1px); }
+            100% { transform: translate(1px, 2px); }
+        }
+
+        @keyframes structural-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .wrong-shake { animation: structural-shake 0.3s ease-in-out; }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        .winner-banner {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .score-summary {
+            color: #aaa;
+            font-size: 2rem;
+            margin-bottom: 40px;
+        }
+
+        .next-round-btn {
+            font-size: 2.2rem;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 50px;
+            background: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #e65100, 0 10px 20px rgba(0,0,0,0.4);
+            font-weight: bold;
+            z-index: 10;
+        }
+        .next-round-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #e65100;
+        }
+
+        /* COVER PAGE CONFIGURATION */
+        .start-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #143525, #081a11); /* Deep forest canvas for clean text contrast */
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .food-bg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Big, crisp vector illustrations moving across the interface */
+        .floating-food {
+            position: absolute;
+            animation: floatUpward 18s linear infinite;
+            bottom: -160px;
+            filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.5)); /* Adds massive depth separation */
+        }
+
+        @keyframes floatUpward {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Distinct layout tracks for individual assets */
+        .f-broccoli { left: 5%; width: 140px; height: 140px; animation-duration: 22s; animation-delay: 0s; }
+        .f-avocado { left: 23%; width: 150px; height: 150px; animation-duration: 26s; animation-delay: 5s; }
+        .f-strawberry { left: 42%; width: 120px; height: 120px; animation-duration: 18s; animation-delay: 2s; }
+        .f-carrot { left: 62%; width: 140px; height: 140px; animation-duration: 24s; animation-delay: 8s; }
+        .f-apple { left: 78%; width: 130px; height: 130px; animation-duration: 20s; animation-delay: 3s; }
+        .f-watermelon { left: 91%; width: 160px; height: 160px; animation-duration: 28s; animation-delay: 11s; }
+
+        .start-screen-content {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: rgba(10, 30, 20, 0.85); /* Semi-transparent panel ensures perfect text scanability */
+            padding: 40px 60px;
+            border-radius: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            max-width: 85%;
+        }
+
+        .art-scene {
+            position: relative;
+            width: 320px;
+            height: 140px;
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 2px dashed rgba(255,255,255,0.1);
+        }
+
+        .art-block {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: #ff4081;
+            border-radius: 8px;
+            bottom: 20px;
+            box-shadow: 0 6px 0 #c2185b, 0 6px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        .block-s { left: 40px; background: #4caf50; box-shadow: 0 6px 0 #2e7d32; } 
+        .block-p { left: 90px; background: #8bc34a; box-shadow: 0 6px 0 #558b2f; }
+        .block-e { left: 140px; background: #ffeb3b; box-shadow: 0 6px 0 #fbc02d; color: #333; }
+        .block-l { left: 190px; background: #ff9800; box-shadow: 0 6px 0 #ef6c00; }
+        .block-l2 { left: 240px; background: #ff5722; box-shadow: 0 6px 0 #d84315; }
+
+        .art-mascot {
+            position: absolute;
+            width: 30px;
+            height: 50px;
+            background: #ffd54f;
+            border-radius: 5px 5px 0 0;
+            top: 25px;
+            left: 145px;
+            transform-origin: bottom center;
+            animation: mascot-dance 1.4s infinite ease-in-out alternate;
+        }
+        .art-mascot::before {
+            content: ''; position: absolute; bottom: -12px; left: 0;
+            border-width: 12px 15px 0 15px; border-style: solid; border-color: #ffcc80 transparent transparent transparent;
+        }
+        .art-mascot::after {
+            content: ''; position: absolute; bottom: -16px; left: 10px;
+            border-width: 4px 5px 0 5px; border-style: solid; border-color: #333 transparent transparent transparent;
+        }
+        .mascot-eye {
+            position: absolute; width: 6px; height: 6px; background: #333; border-radius: 50%; top: 15px;
+        }
+        .eye-l { left: 6px; } .eye-r { right: 6px; }
+
+        @keyframes mascot-dance {
+            0% { transform: rotate(-15deg) translateY(0); }
+            100% { transform: rotate(15deg) translateY(-8px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="start-screen">
+        <!-- Background Vector Graphics Layer (Bright, Clean, Solid Colors) -->
+        <div class="food-bg-layer">
+            <!-- Broccoli -->
+            <svg class="floating-food f-broccoli" viewBox="0 0 100 100">
+                <path d="M44,70 L44,95 C44,97 56,97 56,95 L56,70 Z" fill="#aed581" stroke="#558b2f" stroke-width="3"/>
+                <path d="M50,12 C33,12 22,24 22,40 C12,42 8,54 16,64 C10,76 24,86 38,81 C42,89 58,89 62,81 C76,86 90,76 84,64 C92,54 88,42 78,40 C78,24 67,12 50,12 Z" fill="#2e7d32" stroke="#1b5e20" stroke-width="3"/>
+                <circle cx="38" cy="32" r="9" fill="#1b5e20"/>
+                <circle cx="64" cy="40" r="11" fill="#1b5e20"/>
+                <circle cx="48" cy="56" r="13" fill="#1b5e20"/>
+            </svg>
+            <!-- Avocado -->
+            <svg class="floating-food f-avocado" viewBox="0 0 100 100">
+                <path d="M50,8 C30,8 22,45 22,65 C22,84 34,94 50,94 C66,94 78,84 78,65 C78,45 70,8 50,8 Z" fill="#1b5e20" stroke="#0a230d" stroke-width="3"/>
+                <path d="M50,15 C35,15 28,47 28,65 C28,80 38,88 50,88 C62,88 72,80 72,65 C72,47 65,15 50,15 Z" fill="#d4e157" stroke="#afb42b" stroke-width="1"/>
+                <circle cx="50" cy="62" r="16" fill="#8d6e63" stroke="#4e342e" stroke-width="3"/>
+            </svg>
+            <!-- Strawberry -->
+            <svg class="floating-food f-strawberry" viewBox="0 0 100 100">
+                <path d="M50,92 C82,60 88,28 76,16 C64,4 36,4 24,16 C12,28 18,60 50,92 Z" fill="#ff1744" stroke="#b71c1c" stroke-width="3.5"/>
+                <path d="M50,20 L38,5 L50,13 L62,5 Z" fill="#4caf50" stroke="#1b5e20" stroke-width="2"/>
+                <circle cx="36" cy="32" r="2.5" fill="#fff59d"/><circle cx="64" cy="32" r="2.5" fill="#fff59d"/><circle cx="50" cy="46" r="2.5" fill="#fff59d"/><circle cx="40" cy="62" r="2.5" fill="#fff59d"/><circle cx="60" cy="62" r="2.5" fill="#fff59d"/>
+            </svg>
+            <!-- Carrot -->
+            <svg class="floating-food f-carrot" viewBox="0 0 100 100">
+                <path d="M28,8 L44,35 L16,14 Z M50,6 L50,35 Z M72,8 L56,35 L84,14 Z" fill="#4caf50" stroke="#1b5e20" stroke-width="2"/>
+                <path d="M50,96 C56,70 66,40 66,28 C65,18 35,18 35,28 C35,40 44,70 50,96 Z" fill="#ff9100" stroke="#dd2c00" stroke-width="3.5"/>
+                <path d="M42,42 Q50,44 58,42 M38,58 Q50,60 56,58 M44,74 Q50,76 53,74" stroke="#dd2c00" stroke-width="3" stroke-linecap="round" fill="none"/>
+            </svg>
+            <!-- Apple -->
+            <svg class="floating-food f-apple" viewBox="0 0 100 100">
+                <path d="M50,24 C44,16 22,16 18,35 C12,60 34,90 50,90 C66,90 88,60 84,35 C80,16 58,16 50,24 Z" fill="#d50000" stroke="#7f0000" stroke-width="3.5"/>
+                <path d="M50,24 Q54,8 66,10" stroke="#5d4037" stroke-width="4.5" fill="none"/>
+                <path d="M64,10 C72,10 74,18 64,23 C56,18 58,10 64,10 Z" fill="#4caf50" stroke="#1b5e20" stroke-width="1.5"/>
+            </svg>
+            <!-- Watermelon Slice -->
+            <svg class="floating-food f-watermelon" viewBox="0 0 100 100">
+                <path d="M8,42 A42,42 0 0,0 92,42 Z" fill="#2e7d32" stroke="#1b5e20" stroke-width="3.5"/>
+                <path d="M14,42 A36,36 0 0,0 86,42 Z" fill="#ffffff"/>
+                <path d="M18,42 A32,32 0 0,0 82,42 Z" fill="#ff1744"/>
+                <circle cx="34" cy="55" r="3.5" fill="#000000"/><circle cx="50" cy="64" r="3.5" fill="#000000"/><circle cx="66" cy="55" r="3.5" fill="#000000"/>
+            </svg>
+        </div>
+
+        <!-- Interface Text Layer (Guaranteed Clean Visualization) -->
+        <div class="start-screen-content">
+            <div class="art-scene">
+                <div class="art-mascot"><div class="mascot-eye eye-l"></div><div class="mascot-eye eye-r"></div></div>
+                <div class="art-block block-s">R</div>
+                <div class="art-block block-p">U</div>
+                <div class="art-block block-e">S</div>
+                <div class="art-block block-l">H</div>
+                <div class="art-block block-l2">!</div>
+            </div>
+
+            <h1 style="font-size: 4.2rem; color: #ffeb3b; margin: 0; text-shadow: 0 6px 15px rgba(0,0,0,0.8); letter-spacing: 2px; text-transform: uppercase;">HEALTH SPELLING RUSH</h1>
+            <p style="font-size: 1.45rem; color: #ffffff; margin: 15px 0 35px 0; text-align: center; max-width: 90%; font-weight: bold; text-shadow: 0 3px 6px rgba(0,0,0,0.9); line-height: 1.5;">
+                Race to score vital nutrition & body terms in 60s!<br>
+                <span style="color: #ffb74d; font-size: 1.2rem; font-weight: normal;">👉 Click a floating tile ➔ Next click its targeted slot box!</span>
+            </p>
+            <button class="next-round-btn" onclick="startGame()">START RUSH</button>
+        </div>
+    </div>
+
+    <div class="battle-arena">
+        
+        <div id="boys-side" class="team-side">
+            <div class="header">
+                <h2 class="team-title">Boys Words Cleared</h2>
+                <div id="boys-score" class="score-board">0</div>
+            </div>
+            
+            <div class="word-clue-container">
+                <div class="clue-label">Current Target Word:</div>
+                <div id="boys-clue" class="word-to-spell">---</div>
+            </div>
+
+            <div id="boys-slots" class="slots-container"></div>
+            <div id="boys-pool" class="letters-pool"></div>
+        </div>
+
+        <div class="bomb-centerpiece">
+            <div id="bomb" class="bomb-body">
+                <div id="timer" class="timer-display">60</div>
+                <div class="timer-lbl">Sec Left</div>
+            </div>
+        </div>
+
+        <div id="girls-side" class="team-side">
+            <div class="header">
+                <h2 class="team-title">Girls Words Cleared</h2>
+                <div id="girls-score" class="score-board">0</div>
+            </div>
+
+            <div class="word-clue-container">
+                <div class="clue-label">Current Target Word:</div>
+                <div id="girls-clue" class="word-to-spell">---</div>
+            </div>
+
+            <div id="girls-slots" class="slots-container"></div>
+            <div id="girls-pool" class="letters-pool"></div>
+        </div>
+    </div>
+
+    <div id="winner-overlay" class="overlay">
+        <div id="winner-text" class="winner-banner">TIME'S UP!</div>
+        <div id="score-summary" class="score-summary">Boys: 0 | Girls: 0</div>
+        <button class="next-round-btn" onclick="resetGameTotal()">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        const wordPool = [
+            "carbohydrates", "fiber", "protein", "energy", "chicken", "bread", 
+            "yogurt", "fats", "protect", "organs", "avocado", "vitamins", 
+            "fight", "sickness", "strawberry", "mineral", "build", "bones", 
+            "healthy", "stomach", "cabbage"
+        ];
+
+        let scores = { boys: 0, girls: 0 };
+        let currentWords = { boys: "", girls: "" };
+        
+        let selectedState = {
+            boys: { tileElement: null, letter: "" },
+            girls: { tileElement: null, letter: "" }
+        };
+
+        let timerVal = 60;
+        let timerInterval = null;
+        let gameActive = false;
+        let audioCtx = null;
+        
+        let activeAnimations = [];
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'bell') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, now);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } 
+            else if (type === 'select') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554, now + 0.05);
+                gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            }
+            else if (type === 'buzz') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, now);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } 
+            else if (type === 'wordclear') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3);
+                gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+            else if (type === 'tick') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(700, now);
+                gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                osc.start(now); osc.stop(now + 0.04);
+            }
+            else if (type === 'explosion') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(20, now + 1);
+                gain.gain.setValueAtTime(0.6, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1);
+                osc.start(now); osc.stop(now + 1);
+            }
+        }
+
+        function startGame() {
+            initAudio();
+            document.getElementById('start-screen').style.display = 'none';
+            resetGameTotal();
+        }
+
+        function resetGameTotal() {
+            document.getElementById('winner-overlay').classList.remove('active');
+            document.getElementById('bomb').classList.remove('panic');
+            scores = { boys: 0, girls: 0 };
+            document.getElementById('boys-score').innerText = "0";
+            document.getElementById('girls-score').innerText = "0";
+            
+            gameActive = true;
+            activeAnimations = [];
+
+            getNewWordForTeam('boys');
+            getNewWordForTeam('girls');
+
+            animateFloatingObjects();
+
+            timerVal = 60;
+            document.getElementById('timer').innerText = timerVal;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function getNewWordForTeam(team) {
+            clearSelection(team);
+
+            const randomWord = wordPool[Math.floor(Math.random() * wordPool.length)];
+            currentWords[team] = randomWord.toLowerCase();
+
+            document.getElementById(`${team}-clue`).innerText = randomWord.toUpperCase();
+            
+            const slotsBox = document.getElementById(`${team}-slots`);
+            slotsBox.innerHTML = "";
+            for (let i = 0; i < randomWord.length; i++) {
+                const slot = document.createElement('div');
+                slot.className = "letter-slot";
+                slot.dataset.char = randomWord[i].toLowerCase();
+                slot.dataset.filled = "false";
+                slot.dataset.index = i;
+                
+                slot.addEventListener('click', () => handleSlotTap(team, slot));
+                slotsBox.appendChild(slot);
+            }
+
+            const poolBox = document.getElementById(`${team}-pool`);
+            poolBox.innerHTML = "";
+
+            const containerWidth = poolBox.clientWidth || 360;
+            const containerHeight = 280;
+
+            let letters = randomWord.split('');
+            letters.forEach((char, idx) => {
+                const tile = document.createElement('div');
+                tile.className = "jiggle-tile";
+                tile.innerText = char.toUpperCase();
+                tile.dataset.char = char.toLowerCase();
+                tile.dataset.id = team + "-" + idx;
+
+                let posX = Math.random() * (containerWidth - 60);
+                let posY = Math.random() * (containerHeight - 65);
+                
+                tile.style.left = `${posX}px`;
+                tile.style.top = `${posY}px`;
+
+                let velX = (Math.random() * 0.8 + 0.8) * (Math.random() > 0.5 ? 1 : -1);
+                let velY = (Math.random() * 0.8 + 0.8) * (Math.random() > 0.5 ? 1 : -1);
+
+                tile.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleLetterTileTap(team, tile, char.toLowerCase());
+                });
+
+                poolBox.appendChild(tile);
+
+                activeAnimations.push({
+                    el: tile,
+                    team: team,
+                    x: posX, y: posY,
+                    vx: velX, vy: velY
+                });
+            });
+        }
+
+        function animateFloatingObjects() {
+            if (!gameActive) return;
+
+            const poolBoys = document.getElementById(`boys-pool`);
+            const poolGirls = document.getElementById(`girls-pool`);
+            
+            const wBoys = poolBoys.clientWidth || 360;
+            const hBoys = poolBoys.clientHeight || 280;
+            const wGirls = poolGirls.clientWidth || 360;
+            const hGirls = poolGirls.clientHeight || 280;
+
+            activeAnimations.forEach(obj => {
+                if (obj.el.classList.contains('used')) return;
+
+                let boundaryW = obj.team === 'boys' ? wBoys : wGirls;
+                let boundaryH = obj.team === 'boys' ? hBoys : hGirls;
+
+                obj.x += obj.vx;
+                obj.y += obj.vy;
+
+                if (obj.x <= 0) { obj.x = 0; obj.vx *= -1; }
+                if (obj.x >= boundaryW - 56) { obj.x = boundaryW - 56; obj.vx *= -1; }
+                if (obj.y <= 0) { obj.y = 0; obj.vy *= -1; }
+                if (obj.y >= boundaryH - 56) { obj.y = boundaryH - 56; obj.vy *= -1; }
+
+                obj.el.style.left = `${obj.x}px`;
+                obj.el.style.top = `${obj.y}px`;
+            });
+
+            requestAnimationFrame(animateFloatingObjects);
+        }
+
+        function handleLetterTileTap(team, tile, character) {
+            if (!gameActive) return;
+
+            const siblingTiles = document.getElementById(`${team}-pool`).querySelectorAll('.jiggle-tile');
+            siblingTiles.forEach(t => t.classList.remove('selected'));
+
+            selectedState[team].tileElement = tile;
+            selectedState[team].letter = character;
+            tile.classList.add('selected');
+            
+            document.body.classList.add(`${team.replace('s','')}-selected`);
+            playSound('select');
+        }
+
+        function handleSlotTap(team, slot) {
+            if (!gameActive) return;
+
+            const selection = selectedState[team];
+
+            if (!selection.tileElement || !selection.letter) {
+                playSound('buzz');
+                triggerShake(team);
+                return;
+            }
+
+            if (slot.dataset.filled === "true") {
+                return;
+            }
+
+            if (slot.dataset.char === selection.letter) {
+                playSound('bell');
+                slot.innerText = selection.letter.toUpperCase();
+                slot.classList.add('filled');
+                slot.dataset.filled = "true";
+
+                selection.tileElement.classList.add('used');
+                clearSelection(team);
+                checkWordCompletion(team);
+            } else {
+                playSound('buzz');
+                triggerShake(team);
+                clearSelection(team);
+            }
+        }
+
+        function clearSelection(team) {
+            if (selectedState[team].tileElement) {
+                selectedState[team].tileElement.classList.remove('selected');
+            }
+            selectedState[team].tileElement = null;
+            selectedState[team].letter = "";
+            document.body.classList.remove(`${team.replace('s','')}-selected`);
+        }
+
+        function checkWordCompletion(team) {
+            const slots = document.getElementById(`${team}-slots`).children;
+            let allFilled = true;
+            
+            for (let i = 0; i < slots.length; i++) {
+                if (slots[i].dataset.filled !== "true") {
+                    allFilled = false;
+                    break;
+                }
+            }
+
+            if (allFilled) {
+                scores[team]++;
+                document.getElementById(`${team}-score`).innerText = scores[team];
+                playSound('wordclear');
+
+                setTimeout(() => {
+                    if (gameActive) getNewWordForTeam(team);
+                }, 300);
+            }
+        }
+
+        function triggerShake(team) {
+            const sideEl = document.getElementById(`${team}-side`);
+            sideEl.classList.add('wrong-shake');
+            setTimeout(() => sideEl.classList.remove('wrong-shake'), 400);
+        }
+
+        function updateTimer() {
+            timerVal--;
+            document.getElementById('timer').innerText = timerVal;
+
+            if (timerVal <= 10 && timerVal > 0) {
+                document.getElementById('bomb').classList.add('panic');
+            }
+
+            if (timerVal > 0) {
+                playSound('tick');
+            } else {
+                clearInterval(timerInterval);
+                playSound('explosion');
+                endGameMatch();
+            }
+        }
+
+        function endGameMatch() {
+            gameActive = false;
+            
+            const overlay = document.getElementById('winner-overlay');
+            const winText = document.getElementById('winner-text');
+            const summaryText = document.getElementById('score-summary');
+
+            summaryText.innerText = `Boys Cleared: ${scores.boys} | Girls Cleared: ${scores.girls}`;
+
+            if (scores.boys > scores.girls) {
+                winText.innerText = "BOYS WIN THE MATCH!";
+                winText.style.color = "#2196F3";
+            } else if (scores.girls > scores.boys) {
+                winText.innerText = "GIRLS WIN THE MATCH!";
+                winText.style.color = "var(--girl-color)";
+            } else {
+                winText.innerText = "IT'S A TIED GAME!";
+                winText.style.color = "var(--accent-color)";
+            }
+
+            overlay.classList.add('active');
+        }
+    </script>
+</body>
+</html>
